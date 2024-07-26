@@ -94,7 +94,7 @@ Please see the following reference implementations for additional examples and t
 ## Feedback & Reviews
 
 - [BigInt CHIP Issues](https://github.com/bitjson/bch-bigint/issues)
-- [`CHIP 2024-07 BigInt` - Bitcoin Cash Research](https://bitcoincashresearch.org/t/)
+- [`CHIP 2024-07 BigInt` - Bitcoin Cash Research](https://bitcoincashresearch.org/t/chip-2024-07-bigint-high-precision-arithmetic-for-bitcoin-cash/1356)
 
 ## Changelog
 
