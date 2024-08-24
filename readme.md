@@ -42,6 +42,23 @@ This proposal obviates the need for higher-precision math emulation. As a result
 
 Because this proposal allows existing contracts to remove higher-precision math emulation, transactions employing these contracts are reduced in size. This reduces transaction fees for contract users, and it reduces storage and bandwidth costs for validators.
 
+### Practical Applications
+
+Currently the Bitcoin Cash network has two active decnetralized applications that would benefit from higher precision arithmetic limits:
+
+- [AnyHedge](https://gitlab.com/GeneralProtocols/anyhedge), a decentralized hedge solution against arbitrary assets on Bitcoin Cash, currently with approx. 25,000 BCH in total value locked (TVL),
+- [Cauldron](https://gitlab.com/riftenlabs/cauldron-whitepaper), an efficient constant product market maker contract on Bitcoin Cash through micro-pools, currently with approx. 200 BCH in TVL.
+
+Both contracts would benefit from increased precision because they could calculate payouts with full precision while avoiding workarounds.
+
+Future applications that could be created with greater ease:
+
+- High-precision state accumulators for finance operations, e.g. adding/removing small shares to/from one big liquidity pool with accurate calculation of payout/deposit amounts, and splitting and merging such liquidity pools without leakeages due to rounding errors. These would be building blocks of more advanced decentralized (DEX) systems or decentralized autonomous organization (DAO) systems.
+- Contracts processing block headers in order to verify SPV proofs, or in order to feed mining information into contracts in a trustless way. These applications require performing 256-bit unsigned arithmetics in order to verify accumulated chainwork, so would need at least 513-bit signed integer support. Applications include hashrate predicition markets and gambling/lottery applications (public entropy accumulation).
+- Contracts wanting to implement custom operations on elliptic curve(s), e.g. [key tweaking](https://bitcoin.stackexchange.com/questions/110402/how-to-tweak-a-public-key-for-taproot) or amount blinding schemes ([confidential transactions](https://elementsproject.org/features/confidential-transactions)). These operations would similarly require 513-bit signed integer support (for 256-bit keys).
+- Contracts wanting to verify Rivest-Shamir-Adleman (RSA) signatures, these operations would require 8193-bit signed integer support (for 4096 key size).
+- Contracts wanting to experiment with more advanced cryptography such as implementing zero-knowledge scalable transparent argument of knowledge (ZK-STARK) proof verification.
+
 ## Technical Specification
 
 The maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`) is increased from `8` to `258`.
