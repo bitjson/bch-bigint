@@ -89,7 +89,42 @@ While this proposal could safely support higher limits, enabling simple manipula
 
 Please see the following reference implementations for additional examples and test vectors:
 
-[TODO: after initial public feedback]
+### Node Implementations
+
+- Bitcoin Cash Node (BCHN): [Merge Request 1876 - Implement CHIP-2024-07-BigInt: High-Precision Arithmetic for Bitcoin Cash (on top of VM Limits)](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/merge_requests/1876)
+
+## Activation Costs
+
+We define activation cost as any cost that would arise ex-ante, in anticipation of the activation by affected stakeholders, to ensure that their services will continue to function without interruption once the activation block has been mined.
+In case of this proposal, activation cost is contained to nodes and libraries that implement the Script VM, and will amount to:
+
+- Some fixed amount of node developer man-hours, in order to release updated node software that will be able to correctly calculate the algorithmic limit.
+- Some fixed amount of work by stakeholders running node software, in order to update the software in anticipation of algorithm activation.
+- Some fixed amount of effort by others involved in reviewing and testing the new node software version.
+- Some fixed amount of effort by library maintainers in order to update their VM implementations to correctly execute arithmetic operations that would be failing pre-upgrade.
+
+This is the same kind of cost that any Script VM system has had or will have.
+Nothing is required of stakeholders who are neither running nodes nor involved in node development or smart contract development.
+
+## Ongoing Costs
+
+We define ongoing cost as any cost that would arise post upgrade.
+Thanks to the opcode cost budgeting sytem introduced in [CHIP: Targeted Virtual Machine Limits](https://github.com/bitjson/bch-vm-limits), valiated by benchmarks done, we can guarantee that ongoing costs won't be increased at all.
+
+## Risk Assessment
+
+If we define risk as [probability times severity](https://en.wikipedia.org/wiki/Risk#Expected_values) then we could make an estimate using the [risk matrix](https://en.wikipedia.org/wiki/Risk_matrix).
+
+Generic consensus upgrade risks apply.
+Probability of bugs and network splits is entirely controlled by node developers and quality of their work.
+Generic risks are mitigated by node software development quality control and review process, leaving the probability of a bug very low.
+
+Below we will examine some risks specific to this upgrade.
+
+### Correctness of Big Integer Implementation
+
+
+
 
 ## Feedback & Reviews
 
