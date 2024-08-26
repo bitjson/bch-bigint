@@ -50,7 +50,7 @@ Currently the Bitcoin Cash network has a few decentralized applications that wou
 - [Cauldron](https://gitlab.com/riftenlabs/cauldron-whitepaper), an efficient constant product market maker contract on Bitcoin Cash through micro-pools, currently with approx. 200 BCH in TVL.
 - [fex.cash](https://github.com/fex-cash/fex/blob/main/whitepaper/fex_whitepaper.md), an advanced automatic market maker (AMM) contract system, current state unknown.
 
-Both contracts would benefit from increased precision because they could calculate payouts with full precision while avoiding workarounds.
+All these applications would benefit from increased precision because they could calculate payouts with full precision while avoiding workarounds.
 
 Future applications that could be created with greater ease:
 
