@@ -44,10 +44,11 @@ Because this proposal allows existing contracts to remove higher-precision math 
 
 ### Practical Applications
 
-Currently the Bitcoin Cash network has two active decnetralized applications that would benefit from higher precision arithmetic limits:
+Currently the Bitcoin Cash network has a few decentralized applications that would benefit from higher precision arithmetic limits:
 
 - [AnyHedge](https://gitlab.com/GeneralProtocols/anyhedge), a decentralized hedge solution against arbitrary assets on Bitcoin Cash, currently with approx. 25,000 BCH in total value locked (TVL),
 - [Cauldron](https://gitlab.com/riftenlabs/cauldron-whitepaper), an efficient constant product market maker contract on Bitcoin Cash through micro-pools, currently with approx. 200 BCH in TVL.
+- [fex.cash](https://github.com/fex-cash/fex/blob/main/whitepaper/fex_whitepaper.md), an advanced automatic market maker (AMM) contract system, current state unknown.
 
 Both contracts would benefit from increased precision because they could calculate payouts with full precision while avoiding workarounds.
 
