@@ -104,7 +104,8 @@ In case of this proposal, activation cost is contained to nodes and libraries th
 - Some fixed amount of effort by library maintainers in order to update their VM implementations to correctly execute arithmetic operations that would be failing pre-upgrade.
 
 This is the same kind of cost that any upgrade to the Script VM system has had or will have.
-Nothing is required of stakeholders who are neither running nodes nor involved in node development or smart contract development. Smart contract developers are the direct beneficiaries of this upgrade, so we expect them to be happy to bear the activation costs.
+Nothing is required of stakeholders who are neither running nodes nor involved in node development or smart contract development.
+Smart contract developers are the direct beneficiaries of this upgrade, so we expect them to be happy to bear the activation costs.
 
 ## Ongoing Costs
 
@@ -126,15 +127,15 @@ Below we will examine some risks specific to this upgrade.
 As we [mentioned above](#rationale), Satoshi Nakamoto himself removed the BigInt support from Bitcoin's codebase, because of instability in the OpenSSL's big number library, and the risk of different nodes coming to different conclusions about result of some Script operation and it causing a "hard" network split.
 
 Satoshi Nakamoto was a solo developer trying to bootstart a never before seen project, so we can argue that it was a logical choice to prioritize other things, and *temporarily* remove the risk by simply removing big integer support entirely.
-We are now in a much better position, where we can give the problem the attention it deserves, and remove such risks while still unlocking the benefits.
+We are now in a much better position, where we can give the problem the attention it deserves, and remove such risks while accessing the benefits of having big integers.
 
-It was not the only risky dependency - signature cryptography (with secp256k1 elliptic curve) itself also required an external dependency, and later, when more developers got involved, they implemented [secp256k1](https://github.com/bitcoin-core/secp256k1) by themselves.
+It was not the only risky dependency - signature cryptography (with secp256k1 elliptic curve) itself also required an external dependency, and later, when more developers got involved, they implemented [secp256k1](https://github.com/bitcoin/bitcoin/pull/4312) by themselves.
 
 Thankfully, basic arithmetic operations on big integer numbers are a much simpler problem, and a problem where many industries needed a solution, so reliable big number libraries now exist for most programming languages.
 Initial implementation for BCHN intends to use [The GNU Multiple Precision Arithmetic Library](https://gmplib.org/) (AKA `gmp`), which is a time-tested and performant library, of which we only need a subset of operations for BCH Script arithmetic opcodes.
-The same library was used by secp256k1, until 2021 when it was [fully removed](https://github.com/bitcoin-core/secp256k1/commit/1f233b3fa05eb29a744487e0682d925055fb0d4c) as a dependency.
+The same library was used by libsecp256k1, until 2015 when it was [fully removed](https://github.com/bitcoin/bitcoin/commit/75a880390191aeaf7d2fa326f194349a891db022#diff-242b05bb9c57125ed0fbecbda608e3fa6fd3d7cae41e1cba0dcfd706252a7fc0R413) as a dependency.
 
-There exist big integer libraries for other laguages, used in Bitcoin Cash node implementations:
+There exist big integer libraries for languages other than C++ and used in Bitcoin Cash node implementations:
 
 - Golang's [`math/big`](https://pkg.go.dev/math/big) package, expected to be used with [BCHD](https://github.com/OPReturnCode/bchd), considering it is already internally used for [cryptography operations](https://github.com/OPReturnCode/bchd/blob/67d41ee8838026571863491e88288d6d2d5cb717/bchec/privkey.go#L11).
 - Java's [`java.math,BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) library, expected to be used with [Bitcoin Verde](https://github.com/SoftwareVerde/bitcoin-verde), considering it is already internally used for [uint256 operations](https://github.com/SoftwareVerde/bitcoin-verde/blob/e9d140cac8b93a9db572bda906db9decfac1d7ae/src/main/java/com/softwareverde/bitcoin/block/header/difficulty/work/ChainWork.java#L8). It doesn't need to use it for cryptography operatins, because native secp256k1 implementation exists for Java and [is used by Bitcoin Verde](https://github.com/SoftwareVerde/bitcoin-verde/blob/e9d140cac8b93a9db572bda906db9decfac1d7ae/src/main/java/org/bitcoin/NativeSecp256k1.java#L5).
@@ -159,20 +160,21 @@ This risk existed when Bitcoin Cash upgraded arithmetic opcodes from int32 to in
 >
 > To ensure a contract will always fail when arithmetic results overflow or underflow 8-byte Script Numbers (in the rare case that such a behavior is desirable), that behavior must be either 1) explicitly validated or 2) introduced to the contract prior to the activation of any future upgrade which expands the range of Script Numbers.
 
-What is the likelihood of a contract writer not being aware of the above notice, and then devising such a contract where it would actually result in unintended results rather than not affecting active instances or just expanding the working-as-intended scope of the contract? The Bitcoin Cash smart contract development ecosystem is still small enough, so most builders know each other, and dapps with any number of users quickly become common knowledge.
-As part of the CHIP process they will all be contacted for [final confirmation](#stakeholder-responses-statements).
+What is the likelihood of a contract writer not being aware of the above notice, and then devising such a contract where it would actually result in unintended results rather than not affecting active instances or just expanding the working-as-intended scope of the contract?
+The Bitcoin Cash smart contract development ecosystem is still small enough, so most builders know each other, and smart contract applications with any number of users quickly become common knowledge.
+As part of the CHIP process they will all be contacted for [final confirmation](#stakeholder-responses--statements).
 
 Even before that, we can already examine how this upgrade would impact some of those:
 
 - If we examine the [Cauldron contract](https://docs.riftenlabs.com/cauldron/whitepaper/#appendix-cauldron-contract) we can see that it would continue to function as intended even with increased precison, rather than fail and require the liquidity pools to be split across smaller ones.
 Because of how it was written it automatically benefits from this upgrade.
-- If we examine the fex.cash contrat, we can see a different approach: they worked around the precision issue by [explicitly limiting](https://github.com/fex-cash/fex/blob/main/covenants/amm/burn_lp_token.cash#L7) size of input integers.
+- If we examine the Fex Cash contract, we can see a different approach: they worked around the precision issue by [explicitly limiting](https://github.com/fex-cash/fex/blob/main/covenants/amm/burn_lp_token.cash#L7) size of input integers.
 In this case, the contract would work the same regardless of whether we upgraded integers or not, but would not automatically benefit from increased precision.
-- If we examine the AnyHedge contract we can see it does not even use multiplication, and [`nominalUnitsXSatsPerBch`](https://gitlab.com/GeneralProtocols/anyhedge/contracts/-/blob/development/contracts/v0.12/contract.cash#L27) is set at creation of a contract instance and anything higher than current limits would make it unredeemable, while post-upgrade it would continue to work as intended.
-- If we examine the bch.guru contract, we can see it'd be impacted the same as AnyHedge.
+- If we examine the AnyHedge contract we can see it does not even use multiplication, and [`nominalUnitsXSatsPerBch`](https://gitlab.com/GeneralProtocols/anyhedge/contracts/-/blob/development/contracts/v0.12/contract.cash#L27) is set at creation of a contract instance and anything higher than current limits would make it unredeemable, while post-upgrade it would continue to work as intended, and it would work with a wider range of contract parameters.
+- If we examine the [BCH Guru contract](https://ide.bitauth.com/import-template/eJztWFtv28YS_isGcR7dZO-XvMmyGguRJdeiclwkgbGX2VqtLelYVNAg8H8_Q0qiREm-FWhRFPWDSQ5nZr-Z-WZ2qe_Zf-bhBu5c9i67KYrZ_N3bt-MIb_y4cIvi5k2Y3r0tb2BSjIMrxtPJDwXczW5dAT98JW-Wtm9-nU8n2XEWYR7ux7NSC92hYOLuAO9O2mdH7xf3i6P86khzQSyRSRgBiSVpnfRWeSWASkjAHBGEMhRoaiRN1ARiqPY2AIAQJKLXEksxhnn27vvDcTYPMHH342n5mM2hKG7hDjWui99LwWOQlor4XNy7ydyFpcL3bDyZLQp09el7Nl0Us-l4UnQnEdAXOa4l-cbmzM1v0J0TiWkiePRAaAjJKmnAxxhT8l6qpCAkI7S0VifjSXIQozdJaxJCgOgRyBz-t4BJgP7izsN9td5icjsNv40nv5x8KyBMIwL_lM1vp0X25eF4DyD9WwDEGlQJxzUTlvx6leiHhy_H2Ve4n1d5ZsdZaViMy1qsErtO-1d3u4ChK6bzmzFKKCFkqd1YJtPKWSqUSdES4blhNHoajY6JGSqY9EY5mrykyB_DjXGhLPb0N6jKjFSGX6b339BRtM4zAZFKp41QIfBogRDhnAzeamUUSZRHFyi4SCTqIBGTUIw5zCI4dOvuposJRswQKwZaknK6uA8weHVY6_IehqokdcANF8YpB0FhQZWWPEYgnDJOLTc0mYi9pblFjJpEIoKIEdEGTVNJ_1Qsnc6cH9-Oi9LtZDopOwFb_W5clL2DMoxfIUSyTDP4JBIkTrXlVhOJWdBJSYvd6pRPyVLHIUio0vzwUJLzZfHusCV7-AtrVNHznzklttLqodj04N91aNRT7d8h8bqmweo-1jP_vGHx9HD8E0pUnS7KTFdni61OwqeZm8_LI8innTPHl3p4bOkfbyo2uLi-GA3PTn7OO8NrJY7I78566hKyLzjjUqCGesYDjZZhGpm11AtwwflomARGJMXEGm-4Z1R56rG6kitKwSulhQDpMUAniApJCBM8UBoT9VIrIiwF8NIpZS1ojycvooF-njQwUYWYaEgOO1y5yC3xhFi1ulojy0rv2FRxSM8c80JRFUlSzHEuU9DB4wBBoQaOp7oUpIQQlCQpgAWpELbxghJpPBVeWaCAnEERYzbopPHsB1IQjjPGOBdY8AJZpplVlksqKFYPqQfSqHAoDmlWccAKv15edXg8DpYIM5wqQ2JUkavkTJluPLeKAAGbyAdtOEnCIQLKXUgScRgcfz4pmxK2XMQqci2jMdhXwKQh2lK0ooIrjqNUI0uVjSZiXqOi1hlKrbQEB5XarYcpIRlXoiUMi-wcWaog-Gw9TeebWbB96mrwdL3fbRi6rbpF0YbX9bZcekd3q6bMv81KBzM2v2Ek26b8o1xnEgN5_UDeyQZn6MUyiAQ7A_cipWPUSDRm0FI54QVxnHhrQzlxQgoei6IowTmnQpQ2xBDNrk-OPgmHVC4aIxUyKI_0wmkotFGMeG2w2ZA9RnmIgLTETxf8JMEvGC0U4FQlOvKDXlkkNnqCjU1TEmCE5JbaEIwqwYJgOmqfgJrEApFIdSECtSqFpFLEnOxiLQnKxZLUnyfVS3lUanTbH5asKJ_6o_POT6NWr5J0f_w8OcI_vNUb1Uclovx3Oej1akn7rNP-cNrKW8Pu-4-dy-6PPy9f1QqXg7y8qC1Br1deh2ctJjfiCtNBD_lVt38xytuDUT-vhay-W8dz0Lay7PZPO1e1iLzMssrVYJRfDLr9PL86aw3P6nf0iXePe2xYNTHRl2Eye-k3eyXie5JnS6T23KrDbl9XebnnpEI7vOh1K0r0uxc1p2rh6eWgkp50-wxzUZueji6apXl_2Wnlncv8rNWvX_z5MOhwdPKyWsm9hD25wmGkz5oM_9uqRGzPtNcZDp9PzlprcLmaCU8p73OAskOp3E1aVa9RfjXIBx86_fbg_Lybn3e2mnkT5h9N3z79K-3RSXlpnQy3JtFBi3oo1RbNtq3Rt86bY2h7ucYDLtEf5M2srqft7ogZ5Xu-VyoDLERDcIhzmyJtp6pGtedjr3UOwDvkCcvb0O_0T7dNHout3Jzag9PO04EdjGpV6M1w7Q07fySFdXVOux9fn87nYtnp26cCamjQvwI8fQa8eBn4ZrlLROsObN5sb2mNgh3safrsGG2ebggJwSdqqx49PW3uRb1B-0PePe8s_TS5sz-LPrZ6o86BZcozJBjCV9Pg5UNsb1fZP0qM8uaq-1O7WefnkvMoMQeHNvUXnEx2Aa5G5utQHWBcvfzGw3Kr2FyWdCkptv5Qef6TotJqflMcPLYNHjmy7SZlX3N1TKv5vA48q77_F7PZ9L6AWH5BnbTPrhlh_JpIhFQ-DS867Wz7Ryvy8H_DLmXP), we can see it'd be impacted in similar way as AnyHedge.
 
 These all have active contracts that handle non-trivial amounts of money, and their developers are well aware of the notice, and their contracts wouldn't be broken by this upgrade anyway.
-We can expect similar findings with all others, because it would be hard to actually implement a contract that would be broken by this upgrade.
+We can expect similar findings with any others, because it would be hard to actually implement a contract that would be broken by this upgrade.
 
 With this in mind we can estimate this risk to be extremely low, because both likelihood and severity of some exotic contract breaking are low.
 
