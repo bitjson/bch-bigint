@@ -46,19 +46,24 @@ Because this proposal allows existing contracts to remove higher-precision math 
 
 Currently the Bitcoin Cash network has a few decentralized applications that would benefit from higher precision arithmetic limits:
 
-- [AnyHedge](https://gitlab.com/GeneralProtocols/anyhedge), a decentralized hedge solution against arbitrary assets on Bitcoin Cash, currently with approx. 25,000 BCH in total value locked (TVL),
-- [Cauldron](https://gitlab.com/riftenlabs/cauldron-whitepaper), an efficient constant product market maker contract on Bitcoin Cash through micro-pools, currently with approx. 200 BCH in TVL.
-- [fex.cash](https://github.com/fex-cash/fex/blob/main/whitepaper/fex_whitepaper.md), an advanced automatic market maker (AMM) contract system, current state unknown.
+- [AnyHedge](https://gitlab.com/GeneralProtocols/anyhedge), a decentralized hedge solution against arbitrary assets on Bitcoin Cash, currently with [approx. 25,000 BCH in total value locked (TVL)](https://defillama.com/protocol/anyhedge?denomination=BCH).
+- [Cauldron](https://gitlab.com/riftenlabs/cauldron-whitepaper), an efficient constant product market maker contract on Bitcoin Cash through micro-pools, currently with [approx. 200 BCH in TVL](https://defillama.com/protocol/cauldron?denomination=BCH).
+- [BCH Guru](https://bch.guru/), a unique, on-chain, peer-to-peer crypto price prediction game and NFT collection, built on Bitcoin Cash mainchain, currently with [approx. 0.4 BCH and 326k FURU in TVL](https://app.bch.guru/#/live).
+- [Fex Cash](https://github.com/fex-cash/fex/blob/main/whitepaper/fex_whitepaper.md), an advanced automatic market maker (AMM) contract system, currently with [approx. 15 BCH in TVL](https://fex.cash/ranking).
 
 All these applications would benefit from increased precision because they could calculate payouts with full precision while avoiding workarounds.
 
 Future applications that could be created with greater ease:
 
-- High-precision state accumulators for finance operations, e.g. adding/removing small shares to/from one big liquidity pool with accurate calculation of payout/deposit amounts, and splitting and merging such liquidity pools without leakeages due to rounding errors. These would be building blocks of more advanced decentralized (DEX) systems or decentralized autonomous organization (DAO) systems.
-- Contracts processing block headers in order to verify SPV proofs, or in order to feed mining information into contracts in a trustless way. These applications require performing 256-bit unsigned arithmetics in order to verify accumulated chainwork, so would need at least 513-bit signed integer support. Applications include hashrate predicition markets and gambling/lottery applications (public entropy accumulation).
-- Contracts wanting to implement custom operations on elliptic curve(s), e.g. [key tweaking](https://bitcoin.stackexchange.com/questions/110402/how-to-tweak-a-public-key-for-taproot) or amount blinding schemes ([confidential transactions](https://elementsproject.org/features/confidential-transactions)). These operations would similarly require 513-bit signed integer support (for 256-bit keys).
+- High-precision state accumulators for decentralized finance (DeFi) operations, e.g. adding / removing small shares to / from a liquidity pool with accurate calculation of payout / deposit amounts, and splitting and merging such liquidity pools without leakeages due to rounding errors.
+These operations are critical building blocks in more advanced decentralized exchange (DEX) systems, over-collateralized stablecoin systems, prediction market (PM) systems, decentralized autonomous organization (DAO) systems, etc.
+- Contracts processing block headers in order to verify simple payment verification (SPV) proofs, or in order to feed mining information into contracts in a trustless way.
+These applications require performing 256-bit unsigned arithmetics in order to verify accumulated chainwork, so would need at least 513-bit signed integer support.
+Applications include hashrate prediction markets, gambling / lottery applications (public entropy accumulation), verifying transactions or state of other blockchains (potential use in cross-chain bridging systems).
+- Contracts wanting to implement custom operations on elliptic curve(s), e.g. [key tweaking](https://bitcoin.stackexchange.com/questions/110402/how-to-tweak-a-public-key-for-taproot), amount blinding schemes ([confidential transactions](https://elementsproject.org/features/confidential-transactions)), or signature verification using other ellpitic curves than Bitcoin's secp256k1.
+These operations would similarly require 513-bit signed integer support (for 256-bit keys).
 - Contracts wanting to verify Rivest-Shamir-Adleman (RSA) signatures, these operations would require 8193-bit signed integer support (for 4096-bit keys).
-- Contracts wanting to experiment with more advanced cryptography such as implementing zero-knowledge scalable transparent argument of knowledge (ZK-STARK) proof verification.
+- Contracts wanting to implement more advanced cryptography, such as implementing zero-knowledge scalable transparent argument of knowledge (ZK-STARK) proof verification.
 
 ## Technical Specification
 
