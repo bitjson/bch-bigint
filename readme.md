@@ -6,12 +6,12 @@
         Maintainer: Jason Dreyzehner
         Status: Draft
         Initial Publication Date: 2024-07-24
-        Latest Revision Date: 2024-07-24
-        Version: 1.0.0
+        Latest Revision Date: 2024-08-28
+        Version: 1.1.0
 
 ## Summary
 
-This proposal increases the maximum length of numbers in the Bitcoin Cash Virtual Machine from 8 bytes to 258 bytes.
+This proposal removes the limit on the maximum length of numbers in the Bitcoin Cash Virtual Machine. The number length limit is superseded by the [Arithmetic Operation Cost Limit](https://github.com/bitjson/bch-vm-limits#arithmetic-operation-cost).
 
 ## Deployment
 
@@ -44,52 +44,45 @@ Because this proposal allows existing contracts to remove higher-precision math 
 
 ## Technical Specification
 
-The maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`) is increased from `8` to `258`.
-
-### Notice of Possible Future Expansion
-
-While unusual, it is possible to design contracts which rely on the rejection of otherwise-valid VM Numbers which are larger than 258 bytes. Contract authors are advised that future upgrades may further expand the supported range of BCH VM Numbers beyond 258 bytes.
-
-**This proposal interprets such failure-reliant constructions as intentional** – they are designed to fail unless/until a possible future network upgrade in which larger VM Numbers are enabled (i.e. a contract branch which can only be successfully evaluated in the event of such an upgrade).
-
-<details>
-
-<summary>Notes</summary>
-
-As always, the security of a contract is the responsibility of the entity locking funds in that contract; funds can always be locked in insecure contracts (e.g. `OP_DROP OP_1`). This notice is provided to warn contract authors and explicitly codify a network policy: the possible existence of poorly-designed contracts will not preclude future upgrades from further expanding the range of VM Numbers.
-
-To ensure a contract will always fail when arithmetic results overflow or underflow 258-byte VM Numbers (in the rare case that such a behavior is desirable), that behavior must be either 1) explicitly validated or 2) introduced to the contract prior to the activation of any future upgrade which expands the range of VM Numbers.
-
-This notice also appeared in [CHIP-2021-03: Bigger Script Integers](https://gitlab.com/GeneralProtocols/research/chips/-/blob/master/CHIP-2021-02-Bigger-Script-Integers.md#notice-of-possible-future-expansion).
-
-</details>
+The limit on the maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`) is removed.
 
 ## Rationale
 
-### Selection of 258 Byte Limit
+### Removal of Number Length Limit
 
-This proposal increases the maximum length of VM numbers from 8 bytes to 258 bytes. The 258 byte limit is selected to significantly exceed typical requirements, enabling practically all financial and classical cryptographic use cases without emulated precision.
+With the activation of the [Arithmetic Operation Cost Limit](https://github.com/bitjson/bch-vm-limits#arithmetic-operation-cost), the additional limitation on VM number length has no impact on worst-case transaction validation performance (see [Tests & Benchmarks](#tests--benchmarks)). This proposal removes the limit, allowing valid VM numbers to extend to the stack element size limit (A.K.A. `MAX_SCRIPT_ELEMENT_SIZE`) of 10,000 bytes. See [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits).
 
-In particular, this limit is two bytes beyond `256` (2<sup>8</sup>), enabling simpler bitwise manipulation of 256-byte results using VM operations.
+Alternatively, this proposal could raise the limit to a higher constant value like `258`, the constant selected by Satoshi Nakamoto in [`reverted makefile.unix wx-config -- version 0.3.6`](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/commit/757f0769d8360ea043f469f3a35f6ec204740446) (July 29, 2010). However, because the limit is no longer necessary for mitigating worst-case transaction validation cost, selection of any particular constant would be arbitrary.
 
-Notably, this limit is considered to be a conservative choice in part because it matches the initial limit selected by Satoshi Nakamoto in [`reverted makefile.unix wx-config -- version 0.3.6`](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/commit/757f0769d8360ea043f469f3a35f6ec204740446)
-(July 29, 2010), one of a series of emergency patches deployed in 2010 to address potential Denial-Of-Service attacks against the network. This limit was later reduced to 4 bytes in [`misc changes`](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/commit/4bd188c4383d6e614e18f79dc337fbabe8464c8) (August 15, 2010) as Satoshi removed the VM's dependency on OpenSSL's big number implementation, following [instability he'd discovered in the right shift operation](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/commit/c4319e678f693d5fbc49bd357ded1c8f951476e9). By July of 2010, Satoshi had identified that such instability created a risk of network splits, and he had begun to limit reliance on dependencies in consensus code.
+By fully-removing the limit, overall protocol complexity is reduced, simplifying both future VM implementations and contract development. For VM implementations, eliminating out-of-range cases significantly reduces the combinatorial set of possible inputs and outputs for the numeric operations: `OP_1ADD` (`0x8b`), `OP_1SUB` (`0x8c`), `OP_NEGATE` (`0x8f`), `OP_ABS` (`0x90`), `OP_NOT` (`0x91`), `OP_0NOTEQUAL` (`0x92`), `OP_ADD` (`0x93`), `OP_SUB` (`0x94`), `OP_MUL` (`0x95`), `OP_DIV` (`0x96`), `OP_MOD` (`0x97`), `OP_BOOLAND` (`0x9a`), `OP_BOOLOR` (`0x9b`), `OP_NUMEQUAL` (`0x9c`), `OP_NUMEQUALVERIFY` (`0x9d`), `OP_NUMNOTEQUAL` (`0x9e`), `OP_LESSTHAN` (`0x9f`), `OP_GREATERTHAN` (`0xa0`), `OP_LESSTHANOREQUAL` (`0xa1`), `OP_GREATERTHANOREQUAL` (`0xa2`), `OP_MIN` (`0xa3`), `OP_MAX` (`0xa4`), and `OP_WITHIN` (`0xa5`). For contract authors, eliminating the possibility of out-of-range errors prevents a class of potential vulnerabilities arising from a contract system's failure to validate that intermediate arithmetic results never exceed an (uncommonly-encountered) maximum number length limit.
 
-While this proposal could safely support higher limits, enabling simple manipulation of 512-byte, 1024-byte, or higher precision results, the `258` byte limit is considered more conservative, as it can be raised by future proposals without introducing a new number format or breaking existing applications (see [Notice of Possible Future Expansion](#notice-of-possible-future-expansion)), while limit reductions would be much more disruptive or impossible on today's network.
+### Non-Inclusion of Implementation-Specific Technical Details
+
+This proposal specifies only the necessary change to the consensus protocol: removal of the number length limit.
+
+The software changes required to support this consensus change differ significantly from implementation to implementation. VM implementations which already internally use arbitrary-precision arithmetic for VM number manipulation may only need to disable code enforcing the previous limit, while other implementations may be required to integrate an arbitrary-precision arithmetic library or language primitive. In all cases, implementations should verify their functional behavior and performance characteristics against the [Tests & Benchmarks](#tests--benchmarks).
+
+### Non-Inclusion of VM Number Format or Operation Descriptions
+
+Beyond dropping the unnecessary limit on VM number length, this proposal does not modify any other properties of the VM. Notably, the precise format and behavior of VM numbers across all VM operations – especially `OP_1ADD` (`0x8b`), `OP_1SUB` (`0x8c`), `OP_NEGATE` (`0x8f`), `OP_ABS` (`0x90`), `OP_NOT` (`0x91`), `OP_0NOTEQUAL` (`0x92`), `OP_ADD` (`0x93`), `OP_SUB` (`0x94`), `OP_MUL` (`0x95`), `OP_DIV` (`0x96`), `OP_MOD` (`0x97`), `OP_BOOLAND` (`0x9a`), `OP_BOOLOR` (`0x9b`), `OP_NUMEQUAL` (`0x9c`), `OP_NUMEQUALVERIFY` (`0x9d`), `OP_NUMNOTEQUAL` (`0x9e`), `OP_LESSTHAN` (`0x9f`), `OP_GREATERTHAN` (`0xa0`), `OP_LESSTHANOREQUAL` (`0xa1`), `OP_GREATERTHANOREQUAL` (`0xa2`), `OP_MIN` (`0xa3`), `OP_MAX` (`0xa4`), and `OP_WITHIN` (`0xa5`) – are part of network consensus and do not otherwise change as a result of this proposal. For the avoidance of doubt, see the [Tests & Benchmarks](#tests--benchmarks).
 
 ## Stakeholder Responses & Statements
 
-[TODO: after initial public feedback]
+[Stakeholder Responses & Statements &rarr;](stakeholders.md)
 
-## Test Vectors
+## Tests & Benchmarks
 
-[TODO: after initial public feedback]
+[`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) includes a suite of functional tests and benchmarks to verify the behavior and performance of all operations within virtual machine implementations, including high-precision arithmetic operations. See [CHIP Limits: Tests & Benchmarks](https://github.com/bitjson/bch-vm-limits/blob/master/tests-and-benchmarks.md) for details.
 
 ## Implementations
 
 Please see the following reference implementations for additional examples and test vectors:
 
-[TODO: after initial public feedback]
+- C++:
+  - [Bitcoin Cash Node (BCHN)](https://bitcoincashnode.org/) – A professional, miner-friendly node that solves practical problems for Bitcoin Cash. [Merge Request !1876](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/merge_requests/1876).
+- JavaScript/TypeScript
+  - [Libauth](https://github.com/bitauth/libauth) – An ultra-lightweight, zero-dependency JavaScript library for Bitcoin Cash. [Pull Request #139](https://github.com/bitauth/libauth/pull/139).
+  - [Bitauth IDE](https://github.com/bitauth/bitauth-ide) – An online IDE for bitcoin (cash) contracts. [Pull Request #101](https://github.com/bitauth/bitauth-ide/pull/101).
 
 ## Feedback & Reviews
 
@@ -100,7 +93,9 @@ Please see the following reference implementations for additional examples and t
 
 This section summarizes the evolution of this document.
 
-- **v1.0.0 – 2024-07-24** (current)
+- **v1.1.0 – 2024-08-28**
+  - Remove the VM number length limit ([#1](https://github.com/bitjson/bch-bigint/issues/1))
+- **v1.0.0 – 2024-07-24** ([`b114c957`](https://github.com/bitjson/bch-bigint/commit/b114c95729e670f4b0780d4fd14590c35d281d77))
   - Initial publication
 
 ## Copyright
