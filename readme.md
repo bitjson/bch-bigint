@@ -64,6 +64,19 @@ This upgrade affects two non-arithmetic opcodes that are used to convert an arbi
 
 #### OP_NUM2BIN (0x80)
 
+Pop two items from stack.  
+The top-most value is read as desired length of the output's stack item, and the other one as numerical value to be converted.  
+If the length is greater than `MAX_SCRIPT_ELEMENT_SIZE`, fail immediately.  
+If the value is not a minimally-encoded script number, fail immediately.  
+If the length is less than size of the value, fail immediately.  
+Pad the numerical value with 0-bytes until desired length is reached and then push the result to stack.
+
+Executing the operation on value 0 and length 0 is valid and will return 0 as an empty stack item.  
+When positive values are padded the operation will simply add 0-bytes on the higher end, e.g. executing it on `7b` (123) and `05` (5) will return `7b00000000`.  
+When negative values are padded the operation will similarly add 0-bytes on the higher end but it must also move the sign bit to highest byte, e.g. executing it on `fb` (-123) and `05` (5) will return `7b00000080`.
+
+#### OP_BIN2NUM (0x81)
+
 Pop one item from stack.
 Decode the stack item to a numerical value using script number encoding scheme.
 Push the value on stack as a minimally-encoded script number.
@@ -75,19 +88,6 @@ This operation may reduce the size of the stack item but it will never increase 
 
 Before this upgrade, the operation would fail if it would have to return a value outside the int64 range.
 After this upgrade, the operation will never fail because it can not increase the size of the stack item so any byte sequence on stack will be decodeable.
-
-#### OP_BIN2NUM (0x81)
-
-Pop two items from stack.  
-The top-most value is read as desired length of the output's stack item, and the other one as numerical value to be converted.  
-If the length is greater than `MAX_SCRIPT_ELEMENT_SIZE`, fail immediately.  
-If the value is not a minimally-encoded script number, fail immediately.  
-If the length is less than size of the value, fail immediately.  
-Pad the numerical value with 0-bytes until desired length is reached and then push the result to stack.
-
-Executing the operation on value 0 and length 0 is valid and will return 0.  
-When positive values are padded the operation will simply add 0-bytes on the higher end, e.g. executing it on `7b` (123) and `05` (5) will return `7b00000000`.  
-When negative values are padded the operation will similarly add 0-bytes on the higher end but it must also move the sign bit to highest byte, e.g. executing it on `fb` (-123) and `05` (5) will return `7b00000080`.
 
 ### Arithmetic Operations
 
