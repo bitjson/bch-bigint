@@ -44,10 +44,14 @@ Because this proposal allows existing contracts to remove higher-precision math 
 
 ## Technical Specification
 
-The limit on the maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`) is removed.  
+The limit on the maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`) is removed.
 The numbers will still be limited, by the maximum stack item size (A.K.A. `MAX_SCRIPT_ELEMENT_SIZE`).
 
 For reference, here we will specify the whole set of affected operations.
+
+### Locktime Opcodes
+
+The upgrade DOES NOT change the behavior of OP_CHECKLOCKTIMEVERIFY (0xb1) and OP_CHECKSEQUENCEVERIFY (0xb2).
 
 ### Script Number Encoding
 
@@ -60,26 +64,34 @@ Encoding of value 0 is special, it is encoded as an empty stack item of 0 length
 
 Numbers must be minimally encoded, e.g. `0200` could be decoded to number 2 but it is not valid and encoding it as `02` is mandatory.
 
-This upgrade affects two non-arithmetic opcodes that are used to convert an arbitrary byte array to a minimally encoded script number and back, we will specify them below as well.
+This upgrade affects two non-arithmetic opcodes that are used to convert an arbitrary byte array to a minimally encoded script number and back.
+
+For reference, we will specify them below as well.
 
 #### OP_NUM2BIN (0x80)
 
 Pop two items from stack.  
-The top-most value is read as desired length of the output's stack item, and the other one as numerical value to be converted.  The length must be a minimually encoded script number, otherwise the script fails immediately.
-If the length is greater than `MAX_SCRIPT_ELEMENT_SIZE`, fail immediately.  
-The value is then transformed to a minimally-encoded script number (meaning trailing zeroes may be popped off). At this point the value's size may shrink.
-Then, if the length is less than size of the value, fail immediately.  
-Otherwise, pad the numerical value with 0-bytes until the desired length is reached and then push the result to stack.
+The top-most value is read as a desired length of the output's stack item, and the other one as binary value to be converted.  
+The length must be a minimally encoded script number, otherwise the script fails immediately.  
+The binary value may be any length and does not need to start out as a minimally encoded script number, however.
+If the requested length is larger than `MAX_SCRIPT_ELEMENT_SIZE`, fail immediately.
+The value is then transformed to a minimally-encoded script number (meaning trailing zeroes may be popped off).
+At this point the value's size may shrink.  
+Then, if the new (possibly reduced) length of the value is larger than the requested length, fail immediately.  
+Otherwise, taking account of the sign bit, pad the value with 0-bytes until the desired length is reached and then push the result to stack.
 
 Executing the operation on value 0 and length 0 is valid and will return 0 as an empty stack item.  
 When positive values are padded the operation will simply add 0-bytes on the higher end, e.g. executing it on `7b` (123) and `05` (5) will return `7b00000000`.  
-When negative values are padded the operation will similarly add 0-bytes on the higher end but it must also move the sign bit to highest byte, e.g. executing it on `fb` (-123) and `05` (5) will return `7b00000080`.
+When negative values are padded the operation will similarly add 0-bytes on the higher end but it must also move the sign bit to highest byte, e.g. executing it on `fb` (-123) and `05` (5) will return `7b00000080`.  
+The value to be converted can be a padded number, so this opcode can be used to change padding, too, e.g. executing it on `7b00000000` (123) and `03` (3) will return `7b0000`.  
+Similarly, for negative numbers, executing it on `7b00000080` (-123) and `03` (3) will return `7b0080`.  
+If called on other encodings of 0 (like `00`, `80`, `0000`, `0080`) etc. it WILL NOT preserve the sign bit, and it will return a "positive" encoding of 0, e.g. executing it on `0080` (-0) and `03` (3) will return `000000` (0).
 
 #### OP_BIN2NUM (0x81)
 
-Pop one item from stack.
-Decode the stack item to a numerical value using script number encoding scheme.
-Push the value on stack as a minimally-encoded script number.
+Pop one item from stack.  
+Decode the stack item to a numerical value using script number encoding scheme.  
+Push the value on stack as a minimally-encoded script number.  
 
 For example, byte sequence `0080` is not a valid script number encoding, but the opcode would convert it to value 0 and return an empty stack item which is the only valid encoding for value 0.
 Similarly, byte sequence `ff0080` is not a valid script number encoding, but the opcode would convert it to value -255 and return `ff80` which is the only valid encoding for value -255.
@@ -95,7 +107,9 @@ After this upgrade, the operation will never fail because it can not increase th
 
 If any of the input stack items is not a minimally-encoded script number then the operation must fail, e.g. trying to add `0100` and `01` must fail rather than return `02`.
 
-The operation must fail if any resulting stack item would exceed `MAX_SCRIPT_ELEMENT_SIZE`.
+The operation must fail if any resulting stack item would exceed `MAX_SCRIPT_ELEMENT_SIZE`.  
+Before this upgrade, the operation would fail if any resulting stack item would exceed `nMaxNumSize` which was set to 8 bytes.
+With this upgrade, that requirement has been removed and `MAX_SCRIPT_ELEMENT_SIZE` will be the new limit.
 
 Any result must be returned as a minimally encoded script number, e.g. number 1 is to be returned as `01` rather than `0100`, number -1 is to be returned as `81` rather than `0180`, and number 0 is to be returned as empty stack item rather than `00`.
 
@@ -127,14 +141,20 @@ This will result in same size of the result.
 
 ##### OP_NOT (0x91)
 
-Pop one item from stack. If value is 0 change it to 1, else for all other values,  change it to 0. Push the result on the stack.
-This may reduce the size of the stack item to 0, e.g. if executed on `aabbdd` the result will be an empty stack item (0).
-Or, it may increase the size of the stack item from 0 to 1, e.g. if executed on  an empty stack item (0), it will yield `01`.
+Pop one item from stack.
+If value is 0 change it to 1, else (for any other value) change it to 0.
+Push the result on the stack.
+This may reduce the size of the stack item to 0, e.g. if executed on `aabbdd` the result will be an empty stack item (0), size of which is 0.
+Or, it may increase the size of the stack item from 0 to 1, e.g. if executed on an empty stack item (0) it will yield `01`.
 
 ##### OP_0NOTEQUAL (0x92)
 
-Pop one item from stack. If value is not 0 change it to 1. If it is 0, leave it unchanged. Push the result on stack.
-This may reduce the size of the stack item to 0, e.g. if executed on `aabbdd` the result will be an empty stack item (0). If executed for an empty stack item (0), it will leave the top stack item unchanged.
+Pop one item from stack.
+If value is not 0 change it to 1.
+If it is 0, leave it unchanged.
+Push the result on stack.
+This may reduce the size of the stack item to 1, e.g. if executed on `aabbdd` the result will be `01` (1), size of which is 1.
+If executed for an empty stack item (0), it will leave the top stack item unchanged.
 
 #### Binary Operations
 
@@ -154,12 +174,28 @@ Pop two items from stack, multiply the values together, push the result on stack
 
 ##### OP_DIV (0x96)
 
-Pop two items from stack, divide the 2nd-to-top value with the top-most value, push the **quotient** on stack, e.g. 3/2 will return 1, -3/2 will return -1, 3/-2 will return -1, and -3/-2 will return 1.
+Pop two items from stack.
+If the top-most item (divisor) is 0, fail immediately.
+Divide the 2nd-to-top value (dividend) with the top-most value (divisor).
+Push the **quotient** to stack, e.g.
+
+- 3/2 will return 1,
+- -3/2 will return -1,
+- 3/-2 will return -1, and
+- -3/-2 will return 1.
 
 ##### OP_MOD (0x97)
 
-Pop two items from stack, divide the 2nd-to-top value with the top-most value, push the **remainder** on stack.
-The sign of the result will match the sign of the dividend, e.g. 7/3 will return 1, -7/3 will return -1, 7/-3 will return 1, and -7/3 will return -1.
+Pop two items from stack.
+If the top-most item (divisor) is 0, fail immediately.
+Divide the 2nd-to-top value (dividend) with the top-most value (divisor).
+Push the **remainder** to stack.
+The sign of the result will match the sign of the dividend, e.g.
+
+- 7/3 will return 1,
+- -7/3 will return -1,
+- 7/-3 will return 1, and
+- -7/-3 will return -1.
 
 ##### OP_BOOLAND (0x9a)
 
@@ -224,13 +260,20 @@ Any ternary operation must fail if executed on stack depth of 2 or less.
 
 Pop three items from stack.  
 The top-most item defines the "right" and non-inclusive boundary of a range.  
-The 2nd-to-top item defines the "left" and includive boundary of a range.  
-The 3rd-to-top item is the value to be evaluated.  
-If value being evaluated is in the range (greater or equal to the "left" value, and less than the "right" value) then return 1, else return 0.
+The 2nd-to-top item defines the "left" and inclusive boundary of a range.  
+The 3rd-to-top item is the "value" to be evaluated.  
+If "value" being evaluated is in the range (greater or equal to the "left" value, and less than the "right" value) then return 1, else return 0.
 
-Examples: evaluating `1 5 8` will return 0, evaluating `5 5 8` will return 1, evaluating `7 5 8` will return 1, and evaluating `8 5 8` will return 0.
+Consider the following examples (shorthand for `<value> <left> <right> OP_WITHIN`):
 
-Uses where the "left" value is greater or equal to the "right" value are valid and will always return 0, e.g. `X 8 5` will return 0 for any value of X.
+- evaluating `1 5 8 OP` will return 0,
+- evaluating `5 5 8 OP` will return 1,
+- evaluating `7 5 8 OP` will return 1, and
+- evaluating `8 5 8 OP` will return 0.
+
+Uses where the "left" value is greater or equal to the "right" value are valid and will always return 0, e.g.
+
+- evaluating `X 8 5 OP` will return 0 for any value of X.
 
 ## Rationale
 
