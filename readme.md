@@ -117,7 +117,7 @@ Below we will examine some risks specific to this upgrade.
 
 As we [mentioned above](#rationale), Satoshi Nakamoto himself removed the BigInt support from Bitcoin's codebase, because of instability in the OpenSSL's big number library, and the risk of different nodes coming to different conclusions about result of some Script operation and it causing a "hard" network split.
 
-Satoshi Nakamoto was a solo developer trying to bootstart a never before seen project, so we can argue that it was a logical choice to prioritize other things, and *temporarily* remove the risk by simply removing big integer support entirely.
+Satoshi Nakamoto was a solo developer trying to bootstrap a never before seen project, so we can argue that it was a logical choice to prioritize other things, and *temporarily* remove the risk by simply removing big integer support entirely.
 We are now in a much better position, where we can give the problem the attention it deserves, and remove such risks while accessing the benefits of having big integers.
 
 It was not the only risky dependency - signature cryptography (with secp256k1 elliptic curve) itself also required an external dependency, and later, when more developers got involved, they implemented [secp256k1](https://github.com/bitcoin/bitcoin/pull/4312) by themselves.
