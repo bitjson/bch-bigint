@@ -78,6 +78,17 @@ As described in [Interaction with Existing Operations](#interaction-with-existin
 
 As a practical consequence of removing the limit, numerical operation overflow is no longer a meaningful concept. A number that becomes too large would be too large due to the cost system established in [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits), not due to a numerical boundary. These operations previously required overflow considerations: `OP_1ADD` (`0x8b`), `OP_1SUB` (`0x8c`), `OP_ADD` (`0x93`), `OP_SUB` (`0x94`), `OP_MUL` (`0x95`).
 
+Example showing previous 64-bit integer overflow no longer overflows:
+
+- In the current VM, multiplication of two large 64-bit numbers using `OP_MUL` (`0x95`), where the result is too large to fit in the 64-bit number specification, will result in an overflow and therefore script failure. In other words, the two inputs are valid, but the output is too large.
+- In the VM upgraded with both this CHIP and the cost system of [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits), the multiplication of the same two numbers no longer results in script failure per se. It might result in script failure if the overall cost of the transaction happens to be exceeded by this specific operation.
+
+Example showing removal of overflow behavior in general:
+
+- In the VM upgraded with both this CHIP and the cost system of [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits), the maximum number is a 10,000 byte number, due to the cost system.
+- Multiplying two valid numbers that result in, for example, a 10,005 byte number would result in script failure due to the result being too large to push onto the stack.
+- Notably, the failure would not be due to an overflow of the number system.
+
 ## Stakeholder Responses & Statements
 
 [Stakeholder Responses & Statements &rarr;](stakeholders.md)
