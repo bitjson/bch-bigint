@@ -135,75 +135,99 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 ## OP_ADD (0x93)
 
 1. Stack underflow must fail
-    - Fail: `OP_ADD <1>`
-    - Fail: `<1> OP_ADD <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0> OP_ADD OP_DROP <1>`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0> OP_SWAP OP_ADD OP_DROP <1>`
-3. Commutativity: a + b == b + a
-    - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_EQUAL`
-4. Associativity: (a + b) + c == a + (b + c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_ADD OP_ADD OP_SWAP OP_2SWAP OP_ROT OP_ADD OP_ADD OP_EQUAL`
-5. Identity: a + 0 == 0 + a == a
-    - Pass: `<a> OP_DUP <0> OP_2DUP OP_SWAP OP_ADD OP_ROT OP_ROT OP_ADD OP_DUP OP_ROT OP_ROT OP_EQUALVERIFY OP_EQUAL`
-6. Successor: a + b > a
+    - Fail: `OP_ADD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+    - Fail: `<1> OP_ADD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+2. Any non-numerical input value must fail
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_ADD OP_DROP OP_1`
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SWAP OP_ADD OP_DROP OP_1`
+3. Any non-numerical zero input value must fail
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_ADD OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_ADD OP_DROP OP_1`
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SWAP OP_ADD OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SWAP OP_ADD OP_DROP OP_1`
+4. Commutativity: a + b == b + a
+    - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
+5. Associativity: (a + b) + c == a + (b + c)
+    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_ADD OP_ADD OP_SWAP OP_2SWAP OP_ROT OP_ADD OP_ADD OP_NUMEQUAL`
+6. Identity: a + 0 == 0 + a == a
+    - Pass: `<a> OP_DUP OP_0 OP_2DUP OP_SWAP OP_ADD OP_ROT OP_ROT OP_ADD OP_DUP OP_ROT OP_ROT OP_NUMEQUALVERIFY OP_NUMEQUAL`
+7. Successor: a + b > a
     - Pass: `<a> <b> OP_OVER OP_SWAP OP_ADD OP_SWAP OP_GREATERTHAN`
-7. Symmetry with subtraction: (a + b) - b == a
-    - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_SUB OP_EQUAL`
+8. Symmetry with subtraction: (a + b) - b == a
+    - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_SUB OP_NUMEQUAL`
+9. Output overflow & underflow behavior
+    - Pass: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is in `[MIN, MAX]` range
+    - Fail: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is outside `[MIN, MAX]` range
+10. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 4.
 
 ## OP_SUB (0x94)
 
 1. Stack underflow must fail
-    - Fail: `OP_SUB <1>`
-    - Fail: `<1> OP_SUB <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <0> OP_SUB OP_DROP <1>`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <0> OP_SWAP OP_SUB OP_DROP <1>`
-3. Anti-commutativity: a - b == -(b - a)
-    - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_EQUAL`
-4. Non-associativity: (a - b) - c == a - (b + c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_SUB OP_SWAP OP_2SWAP OP_SUB OP_SWAP OP_SUB OP_EQUAL`
-5. Identity: a - 0 == a
-    - Pass: `<a> OP_DUP <0> OP_SUB OP_EQUAL`
-6. Predecessor: a - b < a
+    - Fail: `OP_SUB OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+    - Fail: `<1> OP_SUB OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+2. Any non-numerical input value must fail
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SUB OP_DROP OP_1`
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SWAP OP_SUB OP_DROP OP_1`
+3. Any non-numerical zero input value must fail
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SUB OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SUB OP_DROP OP_1`
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SWAP OP_SUB OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SWAP OP_SUB OP_DROP OP_1`
+4. Anti-commutativity: a - b == -(b - a)
+    - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_NUMEQUAL`
+5. Non-associativity: (a - b) - c == a - (b + c)
+    - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_SUB OP_SWAP OP_2SWAP OP_SUB OP_SWAP OP_SUB OP_NUMEQUAL`
+6. Identity: a - 0 == a
+    - Pass: `<a> OP_DUP OP_0 OP_SUB OP_NUMEQUAL`
+7. Sign: 0 - a == -a
+    - Pass: `<a> OP_DUP OP_0 OP_SWAP OP_SUB OP_SWAP OP_NEGATE OP_NUMEQUAL`
+8. Predecessor: a - b < a
     - Pass: `<a> <b> OP_OVER OP_SWAP OP_SUB OP_SWAP OP_LESSTHAN`
-7. Symmetry with addition: (a - b) + b == a
-    - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ADD OP_EQUAL`
+9. Symmetry with addition: (a - b) + b == a
+    - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ADD OP_NUMEQUAL`
+10. Output overflow & underflow behavior
+    - Pass: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is in `[MIN, MAX]` range
+    - Fail: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is outside `[MIN, MAX]` range
+11. Output minimal encoding: implicitly tested by OP_NEGATE in test 4.
 
 ## OP_MUL (0x95)
 
 1. Stack underflow must fail
-    - Fail: `OP_MUL <1>`
-    - Fail: `<1> OP_MUL <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_MUL OP_DROP <1>`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_SWAP OP_MUL OP_DROP <1>`
-3. Commutativity: a * b == b * a
-    - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_EQUAL`
-4. Associativity: (a * b) * c == a * (b * c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_MUL OP_MUL OP_SWAP OP_2SWAP OP_ROT OP_MUL OP_MUL OP_EQUAL`
+    - Fail: `OP_MUL OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+    - Fail: `<1> OP_MUL OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+2. Any non-numerical input value must fail
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_MUL OP_DROP OP_1`
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SWAP OP_MUL OP_DROP OP_1`
+3. Any non-numerical zero input value must fail
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_MUL OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_MUL OP_DROP OP_1`
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SWAP OP_MUL OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SWAP OP_MUL OP_DROP OP_1`
+4. Commutativity: a * b == b * a
+    - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_NUMEQUAL`
+5. Associativity: (a * b) * c == a * (b * c)
+    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_MUL OP_MUL OP_SWAP OP_2SWAP OP_ROT OP_MUL OP_MUL OP_NUMEQUAL`
 5. Distributivity: a * (b + c) == (a * b) + (a * c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_MUL OP_SWAP OP_2SWAP OP_OVER OP_SWAP OP_MUL OP_SWAP OP_ROT OP_MUL OP_ADD OP_EQUAL`
+    - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_MUL OP_SWAP OP_2SWAP OP_OVER OP_SWAP OP_MUL OP_SWAP OP_ROT OP_MUL OP_ADD OP_NUMEQUAL`
 6. Identity: x * 1 == 1 * x == x
-    - Pass: `<a> OP_DUP <1> OP_2DUP OP_SWAP OP_MUL OP_ROT OP_ROT OP_MUL OP_DUP OP_ROT OP_ROT OP_EQUALVERIFY OP_EQUAL`
+    - Pass: `<a> OP_DUP OP_1 OP_2DUP OP_SWAP OP_MUL OP_ROT OP_ROT OP_MUL OP_DUP OP_ROT OP_ROT OP_NUMEQUALVERIFY OP_NUMEQUAL`
 7. Negation: x * (-1) == -x
-    - Pass: `<a> OP_DUP <-1> OP_MUL OP_SWAP OP_NEGATE OP_EQUAL`
-8. Zero: x * 0 == 0 * x == x
-    - Pass: `<a> OP_DUP <0> OP_MUL OP_NOT OP_VERIFY <0> OP_SWAP OP_MUL OP_NOT`
-9. Order: a * b < a * c, if a > 0 and b < c
-    - Pass: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`
-10. Inverse Order: a * b > a * c, if a < 0 and b < c
-    - Pass: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_GREATERTHAN`
+    - Pass: `<a> OP_DUP OP_1NEGATE OP_MUL OP_SWAP OP_NEGATE OP_NUMEQUAL`
+8. Zero: x * 0 == 0 * x == 0
+    - Pass: `<a> OP_DUP OP_0 OP_MUL OP_NOT OP_VERIFY OP_0 OP_SWAP OP_MUL OP_NOT`
+9. Order: a * b < a * c
+    - Pass: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`, for a > 0 and b < c
+    - Fail: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`, for a >= 0 and b >= c
 11. Symmetry with division: (a * b) / b == a
-    - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_DIV OP_EQUAL`
+    - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_DIV OP_NUMEQUAL`
 12. Adding a value to itself a number of times is equivalent to multiplying with a positive number.
-    - Pass: `<a> OP_DUP <4> OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_ADD OP_ADD OP_ADD OP_EQUAL`
+    - Pass: `<a> OP_DUP OP_4 OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_ADD OP_ADD OP_ADD OP_NUMEQUAL`
 13. Subtracting a value from itself a number of times is equivalent to multiplying with a negative number.
-    - Pass: `<a> OP_DUP <-4> OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_DUP OP_DUP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_EQUAL`
-14. Overflow behavior.
-    - Fail: `<MAX/2 + 1> <2> OP_MUL`
-15. Underflow behavior.
-    - Fail: `<MIN/2 - 1> <2> OP_MUL`
+    - Pass: `<a> OP_DUP OP_4 OP_NEGATE OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_DUP OP_DUP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_NUMEQUAL`
+14. Output overflow & underflow behavior
+    - Pass: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is in `[MIN, MAX]` range
+    - Fail: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is outside `[MIN, MAX]` range
+15. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 4.
 
 ## OP_DIV (0x96)
 
