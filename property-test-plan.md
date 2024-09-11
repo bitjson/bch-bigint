@@ -156,7 +156,7 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 8. Symmetry with subtraction: (a + b) - b == a
     - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_SUB OP_NUMEQUAL`
 9. Output overflow & underflow behavior
-    - Pass: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is in `[MIN, MAX]` range
+    - Pass: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is inside `[MIN, MAX]` range
     - Fail: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is outside `[MIN, MAX]` range
 10. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 4.
 
@@ -186,7 +186,7 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 9. Symmetry with addition: (a - b) + b == a
     - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ADD OP_NUMEQUAL`
 10. Output overflow & underflow behavior
-    - Pass: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is in `[MIN, MAX]` range
+    - Pass: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is inside `[MIN, MAX]` range
     - Fail: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is outside `[MIN, MAX]` range
 11. Output minimal encoding: implicitly tested by OP_NEGATE in test 4.
 
@@ -207,15 +207,15 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
     - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_NUMEQUAL`
 5. Associativity: (a * b) * c == a * (b * c)
     - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_MUL OP_MUL OP_SWAP OP_2SWAP OP_ROT OP_MUL OP_MUL OP_NUMEQUAL`
-5. Distributivity: a * (b + c) == (a * b) + (a * c)
+6. Distributivity: a * (b + c) == (a * b) + (a * c)
     - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_MUL OP_SWAP OP_2SWAP OP_OVER OP_SWAP OP_MUL OP_SWAP OP_ROT OP_MUL OP_ADD OP_NUMEQUAL`
-6. Identity: x * 1 == 1 * x == x
+7. Identity: x * 1 == 1 * x == x
     - Pass: `<a> OP_DUP OP_1 OP_2DUP OP_SWAP OP_MUL OP_ROT OP_ROT OP_MUL OP_DUP OP_ROT OP_ROT OP_NUMEQUALVERIFY OP_NUMEQUAL`
-7. Negation: x * (-1) == -x
+8. Negation: x * (-1) == -x
     - Pass: `<a> OP_DUP OP_1NEGATE OP_MUL OP_SWAP OP_NEGATE OP_NUMEQUAL`
-8. Zero: x * 0 == 0 * x == 0
+9. Zero: x * 0 == 0 * x == 0
     - Pass: `<a> OP_DUP OP_0 OP_MUL OP_NOT OP_VERIFY OP_0 OP_SWAP OP_MUL OP_NOT`
-9. Order: a * b < a * c
+10. Order: a * b < a * c
     - Pass: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`, for a > 0 and b < c
     - Fail: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`, for a >= 0 and b >= c
 11. Symmetry with division: (a * b) / b == a
@@ -225,7 +225,7 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 13. Subtracting a value from itself a number of times is equivalent to multiplying with a negative number.
     - Pass: `<a> OP_DUP OP_4 OP_NEGATE OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_DUP OP_DUP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_NUMEQUAL`
 14. Output overflow & underflow behavior
-    - Pass: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is in `[MIN, MAX]` range
+    - Pass: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is inside `[MIN, MAX]` range
     - Fail: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is outside `[MIN, MAX]` range
 15. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 4.
 
