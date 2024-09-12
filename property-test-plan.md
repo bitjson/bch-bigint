@@ -260,22 +260,30 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_MOD (0x97)
 
-1. Identity: (a % b) % b == a % b.
-    - Pass: `<a> <b> OP_2DUP OP_SWAP OP_OVER OP_MOD OP_SWAP OP_MOD OP_ROT OP_ROT OP_MOD OP_EQUAL`
-2. Identity: (a * a) % a == 0.
+1. Stack underflow must fail
+    - Fail: `OP_MOD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+    - Fail: `<1> OP_MOD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+2. Any non-numerical input value must fail
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_MOD OP_DROP OP_1`
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_SWAP OP_MOD OP_DROP OP_1`
+3. Any non-numerical zero input value must fail
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_MOD OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_MOD OP_DROP OP_1`
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_SWAP OP_MOD OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_SWAP OP_MOD OP_DROP OP_1`
+4. Power Identity: (a * a) % a == 0 (for a != 0).
     - Pass: `<a> OP_DUP OP_DUP OP_MUL OP_SWAP OP_MOD OP_NOT`
-3. Inverse: ((−a % b) + (a % b)) % b == 0.
+5. Modulo by Zero:
+    - Fail: `<a> OP_0 OP_MOD OP_1 OP_DROP`
+6. Repeat Identity: (a % b) % b == a % b (for b != 0).
+    - Pass: `<a> <b> OP_2DUP OP_SWAP OP_OVER OP_MOD OP_SWAP OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
+7. Sign: a % b == a % (-b) (for b != 0).
+    - Pass: `<a> <b> OP_2DUP OP_MOD OP_ROT OP_ROT OP_NEGATE OP_MOD OP_NUMEQUAL`
+8. Negation: -(a % b) == (-a) % (-b) (for b != 0).
+    - Pass: `<a> <b> OP_2DUP OP_MOD OP_NEGATE OP_ROT OP_NEGATE OP_ROT OP_NEGATE OP_MOD OP_NUMEQUAL`
+9. Inverse: ((−a % b) + (a % b)) % b == 0 (for b != 0).
     - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_NEGATE OP_SWAP OP_TUCK OP_MOD OP_ROT OP_ADD OP_SWAP OP_MOD OP_NOT`
-4. Distributive with addition: (a + b) % c == ((a % c) + (b % c)) % c.
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_ADD OP_SWAP OP_MOD OP_ROT OP_2SWAP OP_TUCK OP_MOD OP_ROT OP_ROT OP_TUCK OP_MOD OP_ROT OP_ADD OP_SWAP OP_MOD OP_EQUAL`
-5. Distributive with multiplication: (a * b) % c == ((a % c) * (b % c)) % c.
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_MUL OP_SWAP OP_MOD OP_ROT OP_2SWAP OP_TUCK OP_MOD OP_ROT OP_ROT OP_TUCK OP_MOD OP_ROT OP_MUL OP_SWAP OP_MOD OP_EQUAL`
-6. Sign: a % b == a % (-b)
-   Pass: `<a> <b> OP_2DUP OP_MOD OP_ROT OP_ROT OP_NEGATE OP_MOD OP_EQUAL`
-7. Sign: (-a) % b == -(a % b)
-   Pass: `<a> <b> OP_2DUP OP_SWAP OP_NEGATE OP_SWAP OP_MOD OP_ROT OP_ROT OP_MOD OP_NEGATE OP_EQUAL`
-8. Modulo by zero must fail
-   Fail: `<a> <0> OP_MOD`
+10. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 6.
 
 ## OP_BOOLAND (0x9a)
 
