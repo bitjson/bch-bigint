@@ -284,6 +284,8 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 9. Inverse: ((−a % b) + (a % b)) % b == 0 (for b != 0).
     - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_NEGATE OP_SWAP OP_TUCK OP_MOD OP_ROT OP_ADD OP_SWAP OP_MOD OP_NOT`
 10. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 6.
+11. Consistency with MUL & DIV operations: (a / b) * b + (a % b) == a (for b != 0)
+    - Test is part of OP_DIV.
 
 ## OP_BOOLAND (0x9a)
 
