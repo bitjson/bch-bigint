@@ -232,25 +232,31 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 ## OP_DIV (0x96)
 
 1. Stack underflow must fail
-    - Fail: `OP_DIV <1>`
-    - Fail: `<1> OP_DIV <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_DIV OP_DROP <1>`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_SWAP OP_DIV OP_DROP <1>`
-3. Consistency with inverse operation: (a / b) * b + (a % b) == a (for b != 0)
-    - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_SWAP OP_2DUP OP_DIV OP_MUL OP_ROT OP_ADD OP_EQUAL`
-4. Distributive: (a + b) / c == a / c + b / c + (a % c + b % c) / c (for c != 0)
-    - Pass: `<a> <b> <c> OP_3DUP OP_3DUP OP_ROT OP_OVER OP_MOD OP_ROT OP_ROT OP_SWAP OP_OVER OP_MOD OP_ROT OP_ADD OP_SWAP OP_DIV OP_SWAP OP_2SWAP OP_ROT OP_SWAP OP_OVER OP_DIV OP_ROT OP_ROT OP_DIV OP_ADD OP_ADD OP_SWAP OP_2SWAP OP_ADD OP_SWAP OP_DIV OP_EQUAL`
-5. Identity: a / 1 == a
-    - Pass: `<a> OP_DUP <1> OP_DIV OP_EQUAL`
-6. Negation: a / (-1) == -a
-    - Pass: `<a> OP_DUP <-1> OP_DIV OP_SWAP OP_NEGATE OP_EQUAL`
-7. Self-division: a / a == 1 (for a != 0)
-    - Pass: `<a> OP_DUP OP_DIV <1> OP_EQUAL`
-8. Dividing a zero: 0 / a == 0 (for a != 0)
-    - Pass: `<a> <0> OP_SWAP OP_DIV <0> OP_EQUAL`
-9. Division by zero: a / 0 must fail.
-    - Fail: `<a> <0> OP_DIV <0> OP_EQUAL`
+    - Fail: `OP_DIV OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+    - Fail: `<1> OP_DIV OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
+2. Any non-numerical input value must fail
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_DIV OP_DROP OP_1`
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_SWAP OP_DIV OP_DROP OP_1`
+3. Any non-numerical zero input value must fail
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_DIV OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_DIV OP_DROP OP_1`
+    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_SWAP OP_DIV OP_DROP OP_1`
+    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_SWAP OP_DIV OP_DROP OP_1`
+4. Consistency with inverse operation: (a / b) * b + (a % b) == a (for b != 0)
+    - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_SWAP OP_2DUP OP_DIV OP_MUL OP_ROT OP_ADD OP_NUMEQUAL`
+5. Distributivity: (a + b) / c == a / c + b / c + (a % c + b % c - (a + b) % c) / c (for c != 0)
+    - Pass: `<a> <b> <c> OP_2 OP_PICK OP_2 OP_PICK OP_ADD OP_OVER OP_DIV OP_3 OP_PICK OP_2 OP_PICK OP_DIV OP_2OVER OP_DIV OP_ADD OP_4 OP_PICK OP_3 OP_PICK OP_MOD OP_4 OP_PICK OP_4 OP_PICK OP_MOD OP_ADD OP_2ROT OP_ADD OP_4 OP_PICK OP_MOD OP_SUB OP_3 OP_ROLL OP_DIV OP_ADD OP_NUMEQUAL`
+6. Identity: a / 1 == a
+    - Pass: `<a> OP_DUP OP_1 OP_DIV OP_NUMEQUAL`
+7. Negation: a / (-1) == -a
+    - Pass: `<a> OP_DUP OP_1NEGATE OP_DIV OP_SWAP OP_NEGATE OP_NUMEQUAL`
+8. Self-division: a / a == 1 (for a != 0)
+    - Pass: `<a> OP_DUP OP_DIV OP_1 OP_NUMEQUAL`
+9. Dividing a zero: 0 / a == 0 (for a != 0)
+    - Pass: `<a> OP_0 OP_SWAP OP_DIV OP_0 OP_NUMEQUAL`
+10. Division by zero: a / 0 must fail.
+    - Fail: `<a> OP_0 OP_DIV OP_0 OP_NUMEQUAL`
+11. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 6.
 
 ## OP_MOD (0x97)
 
