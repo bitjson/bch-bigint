@@ -2,135 +2,123 @@
 
 WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca_script_big_int/src/test/bigint_script_property_tests.cpp
 
-## OP_IF (0x63)
-
-1. Stack underflow must fail
-    - Fail: `OP_IF OP_ENDIF <1>`
-2. Any representation of 0 is evaluated as false, and any other value as true
-    - Pass: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_DUP OP_IF OP_BIN2NUM OP_ELSE OP_BIN2NUM OP_NOT OP_ENDIF`
-
-## OP_NOTIF (0x64)
-
-1. Stack underflow must fail
-    - Fail: `OP_NOTIF OP_ENDIF <1>`
-2. Any representation of 0 is evaluated as false, and any other value as true
-    - Pass: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_DUP OP_NOTIF OP_BIN2NUM OP_NOT OP_ELSE OP_BIN2NUM OP_ENDIF`
-
-## OP_VERIFY (0x69)
-
-1. Stack underflow must fail
-    - Fail: `OP_VERIFY <1>`
-2. Any representation of zero value must fail
-    - Fail: `<0> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_VERIFY <1>`
-3. Any value that is not a representation of zero is evaluated as true
-    - Pass: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_VERIFY <1>`
-
-## OP_IFDUP (0x73)
-
-1. Stack underflow must fail
-    - Fail: `OP_IFDUP <1>`
-2. Any representation of 0 is evaluated as false, and any other value as true
-    - Pass: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_DUP OP_IFDUP OP_IF OP_EQUAL OP_ELSE OP_BIN2NUM OP_NOT OP_ENDIF`
-
 ## OP_1ADD (0x8b)
 
-1. Stack underflow must fail
-    - Fail: `OP_1ADD <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1ADD OP_DROP <1>`
-3. Result is always a minimally-encoded script number.
-    - Pass: `<a> OP_1ADD OP_DUP OP_BIN2NUM OP_EQUAL`
-4. Result is always a successor of the input.
+1. Stack depth
+    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+2. Minimal encoding
+    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+3. Successor
     - Pass: `<a> OP_DUP OP_1ADD OP_LESSTHAN`
-5. Result is always one more than the input.
-    - Pass: `<a> OP_DUP OP_1ADD OP_SWAP OP_SUB <1> OP_EQUAL`
+4. Result is always one more than the input
+    - Pass: `<a> OP_DUP OP_1ADD OP_SWAP OP_SUB OP_1 OP_NUMEQUAL`
+5. Symmetry with 1SUB
+    - Pass: `<a> OP_DUP OP_1ADD OP_1SUB OP_NUMEQUAL`
 6. Applying OP_1ADD a number of times is equivalent to adding the number.
-    - Pass: `<a> OP_DUP <3> OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_EQUAL`
-7. OP_1ADD followed by OP_1SUB returns the original number.
-    - Pass: `<a> OP_DUP OP_1ADD OP_1SUB OP_EQUAL`
-8. Overflow must fail.
-    - Fail: `<MAX> OP_1ADD OP_0NOTEQUAL`
+    - Pass: `<a> OP_DUP OP_3 OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_EQUAL`
+7. Overflow
+    - Pass: `<a> OP_1ADD OP_DROP OP_1`, for a < MAX
+    - Fail: `<a> OP_1ADD OP_DROP OP_1`, for a = MAX
+8. Output minimal encoding: implicitly tested in test 3.
 
 ## OP_1SUB (0x8c)
 
-1. Stack underflow must fail
-    - Fail: `OP_1SUB <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1SUB OP_DROP <1>`
-3. Result is always a minimally-encoded script number.
-    - Pass: `<a> OP_1SUB OP_DUP OP_BIN2NUM OP_EQUAL`
-4. Result is always a predecessor of the input.
+1. Stack depth
+    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+2. Minimal encoding
+    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+3. Predecessor
     - Pass: `<a> OP_DUP OP_1SUB OP_GREATERTHAN`
-5. Result is always one less than the input.
-    - Pass: `<a> OP_DUP OP_1SUB OP_SUB <1> OP_EQUAL`
+4. Result is always one less than the input.
+    - Pass: `<a> OP_DUP OP_1SUB OP_SUB OP_1 OP_NUMEQUAL`
+5. Symmetry with 1ADD
+    - Pass: `<a> OP_DUP OP_1SUB OP_1ADD OP_NUMEQUAL`
 6. Applying OP_1SUB a number of times is equivalent to subtracting the number.
-    - Pass: `<a> OP_DUP <n> OP_SUB OP_SWAP {OP_1SUB}n OP_EQUAL`
-7. OP_1SUB followed by OP_1ADD returns the original number.
-    - Pass: `<a> OP_DUP OP_1SUB OP_1ADD OP_EQUAL`
-8. Underflow must fail.
-    - Fail: `<MIN> OP_1SUB OP_0NOTEQUAL`
+    - Pass: `<a> OP_DUP OP_3 OP_SUB OP_SWAP OP_1SUB OP_1SUB OP_1SUB OP_NUMEQUAL`
+7. Underflow
+    - Pass: `<a> OP_1SUB OP_DROP OP_1`, for a > MIN
+    - Fail: `<a> OP_1SUB OP_DROP OP_1`, for a = MIN
+8. Output minimal encoding: implicitly tested in test 3.
 
 ## OP_NEGATE (0x8f)
 
-1. Stack underflow must fail
-    - Fail: `OP_NEGATE <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_NEGATE OP_DROP <1>`
-3. Result is always a minimally-encoded script number.
-    - Pass: `<a> OP_NEGATE OP_DUP OP_BIN2NUM OP_EQUAL`
-4. Double negation
-    - Pass: `<a> OP_DUP OP_NEGATE OP_NEGATE OP_EQUAL`
-5. Negation is equivalent to multiplying with -1
-    - Pass: `<a> OP_DUP OP_NEGATE <-1> OP_MUL OP_EQUAL`
-6. Sum of a number and its negation is zero
-    - Pass: `<a> OP_DUP OP_NEGATE OP_ADD <0> OP_EQUAL`
-7. Negating zero returns zero
-    - Pass: `<0> OP_NEGATE <0> OP_EQUAL`
+1. Stack depth
+    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+2. Minimal encoding
+    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+3. Double negation
+    - Pass: `<a> OP_DUP OP_NEGATE OP_NEGATE OP_NUMEQUAL`
+4. Negation is equivalent to multiplying with -1
+    - Pass: `<a> OP_DUP OP_NEGATE OP_1NEGATE OP_MUL OP_NUMEQUAL`
+5. Sum of a number and its negation is zero
+    - Pass: `<a> OP_DUP OP_NEGATE OP_ADD OP_0 OP_NUMEQUAL`
+6. Negating zero returns zero
+    - Pass: `OP_0 OP_NEGATE OP_0 OP_NUMEQUAL`
+7. Output minimal encoding: implicitly tested in test 3.
 
 ## OP_ABS (0x90)
 
-1. Stack underflow must fail
-    - Fail: `OP_ABS <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ABS OP_DROP <1>`
-3. Result is always a minimally-encoded script number.
-    - Pass: `<a> OP_ABS OP_DUP OP_BIN2NUM OP_EQUAL`
-4. Absolute value of a positive number is the number itself
-    - Pass: `<a> OP_DUP OP_ABS OP_EQUAL`
-5. Absolute value of a negative number is its positive counterpart
-    - Pass: `<a> OP_DUP OP_NEGATE OP_ABS OP_EQUAL`
-6. Absolute value of zero is zero
-    - Pass: `<0> OP_ABS <0> OP_EQUAL`
+1. Stack depth
+    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+2. Minimal encoding
+    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+3. Absolute value of any positive number is the number itself
+    - Pass: `<a> OP_DUP OP_ABS OP_NUMEQUAL` for a >= 0
+    - Fail: `<a> OP_DUP OP_ABS OP_NUMEQUAL` for a < 0
+4. Negated absolute value of any negative number is the number itself
+    - Pass: `<a> OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL` for a <= 0
+    - Fail: `<a> OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL` for a > 0
+5. Output minimal encoding: implicitly tested in tests 3 & 4.
 
 ## OP_NOT (0x91)
 
-1. Stack underflow must fail
-    - Fail: `OP_NOT <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_NOT OP_DROP <1>`
+1. Stack depth
+    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+2. Minimal encoding
+    - Fail: `<0> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
 3. NOT of zero is one
-    - Pass: `<0> OP_NOT <1> OP_EQUAL`
+    - Pass: `OP_0 OP_NOT OP_1 OP_NUMEQUAL`
 4. NOT of non-zero is zero
-    - Pass: `<a> OP_NOT <0> OP_EQUAL`
-5. Double negation
-    - Pass: `<a> OP_DUP OP_NOT OP_NOT OP_EQUAL`
+    - Pass: `<a> OP_NOT OP_0 OP_NUMEQUAL`
+5. Double not
+    - Pass: `<a> OP_DUP OP_NOT OP_NOT OP_SWAP OP_0NOTEQUAL OP_NUMEQUAL`
 6. Distributivity I
     - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLAND OP_EQUAL`
 7. Distributivity II
     - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLOR OP_EQUAL`
+8. Output minimal encoding: implicitly tested in test 5.
 
 ## OP_0NOTEQUAL (0x92)
 
-1. Stack underflow must fail
-    - Fail: `OP_0NOTEQUAL <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0NOTEQUAL OP_DROP <1>`
+1. Stack depth
+    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+2. Minimal encoding
+    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
 3. 0NOTEQUAL of zero is zero
-    - Pass: `<0> OP_0NOTEQUAL <0> OP_EQUAL`
+    - Pass: `OP_0 OP_0NOTEQUAL OP_0 OP_NUMEQUAL`
 4. 0NOTEQUAL of non-zero is one
-    - Pass: `<a> OP_0NOTEQUAL <1> OP_EQUAL`
-5. Double use
-    - Pass: `<a> OP_DUP OP_0NOTEQUAL OP_0NOTEQUAL OP_EQUAL`
+    - Pass: `{stack: a} OP_0NOTEQUAL OP_1 OP_NUMEQUAL`
+5. Double 0NOTEQUAL
+    - Pass: `{stack: a} OP_DUP OP_0NOTEQUAL OP_0NOTEQUAL OP_SWAP OP_NOT OP_NOT OP_NUMEQUAL`
+6. Output minimal encoding: implicitly tested in test 4.
 
 ## OP_ADD (0x93)
 
