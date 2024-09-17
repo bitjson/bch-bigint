@@ -113,20 +113,20 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_ADD (0x93)
 
-4. Commutativity: a + b == b + a
-    - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
-5. Associativity: (a + b) + c == a + (b + c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_ADD OP_ADD OP_SWAP OP_2SWAP OP_ROT OP_ADD OP_ADD OP_NUMEQUAL`
-6. Identity: a + 0 == 0 + a == a
-    - Pass: `<a> OP_DUP OP_0 OP_2DUP OP_SWAP OP_ADD OP_ROT OP_ROT OP_ADD OP_DUP OP_ROT OP_ROT OP_NUMEQUALVERIFY OP_NUMEQUAL`
-7. Successor: a + b > a
-    - Pass: `<a> <b> OP_OVER OP_SWAP OP_ADD OP_SWAP OP_GREATERTHAN`
-8. Symmetry with subtraction: (a + b) - b == a
-    - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_SUB OP_NUMEQUAL`
-9. Output overflow & underflow behavior
-    - Pass: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is inside `[MIN, MAX]` range
-    - Fail: `<a> <b> OP_ADD OP_DROP OP_1` when `a + b` is outside `[MIN, MAX]` range
-10. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 4.
+- Identity: a + 0 == a && 0 + a == a
+    - Pass: `{stack: a} OP_DUP OP_0 OP_ADD OP_OVER OP_NUMEQUAL OP_0 OP_2 OP_PICK OP_ADD OP_ROT OP_NUMEQUAL OP_BOOLAND`
+- Commutativity: a + b == b + a
+    - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
+- Successor: a < a + b
+    - Pass: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where b > 0
+    - Fail: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where b <= 0 (must fail with `ScriptError::EVAL_FALSE` error)
+- Inverse: (a + b) - b == a
+    - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_SUB OP_NUMEQUAL`
+- Output overflow & underflow behavior
+    - Pass: `{stack: a, b} OP_ADD OP_DROP OP_1`, where `a + b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
+    - Fail: `{stack: a, b} OP_ADD OP_DROP OP_1`, where `a + b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
+- Associativity: (a + b) + c == a + (b + c)
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_ADD OP_OVER OP_ADD OP_2SWAP OP_3 OP_ROLL OP_ADD OP_ADD OP_NUMEQUAL`
 
 ## OP_SUB (0x94)
 
