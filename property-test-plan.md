@@ -104,13 +104,12 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_0NOTEQUAL (0x92)
 
-3. 0NOTEQUAL of zero is zero
+- Zero: !(0 == 0) == 1
     - Pass: `OP_0 OP_0NOTEQUAL OP_0 OP_NUMEQUAL`
-4. 0NOTEQUAL of non-zero is one
+- Non-zero: !(a == 0) == 1
     - Pass: `{stack: a} OP_0NOTEQUAL OP_1 OP_NUMEQUAL`
-5. Double 0NOTEQUAL
+- Double: !(!a) == !(!(a == 0) == 0)
     - Pass: `{stack: a} OP_DUP OP_0NOTEQUAL OP_0NOTEQUAL OP_SWAP OP_NOT OP_NOT OP_NUMEQUAL`
-6. Output minimal encoding: implicitly tested in test 4.
 
 ## OP_ADD (0x93)
 
