@@ -73,15 +73,14 @@ This is tested implicitly by other property tests, because the result of tested 
 
 ## OP_NEGATE (0x8f)
 
-3. Double negation: a == !(!a)
-    - Pass: `<a> OP_DUP OP_NEGATE OP_NEGATE OP_NUMEQUAL`
-4. Negation is equivalent to multiplying with -1
-    - Pass: `<a> OP_DUP OP_NEGATE OP_1NEGATE OP_MUL OP_NUMEQUAL`
-5. Sum of a number and its negation is zero
-    - Pass: `<a> OP_DUP OP_NEGATE OP_ADD OP_0 OP_NUMEQUAL`
-6. Negating zero returns zero
+- Zero negation: -0 == 0
     - Pass: `OP_0 OP_NEGATE OP_0 OP_NUMEQUAL`
-7. Output minimal encoding: implicitly tested in test 3.
+- Double negation: a == -(-a)
+    - Pass: `{stack: a} OP_DUP OP_NEGATE OP_NEGATE OP_NUMEQUAL`
+- Multiplication equivalence: -a == a * (-1)
+    - Pass: `{stack: a} OP_DUP OP_NEGATE OP_SWAP OP_1NEGATE OP_MUL OP_NUMEQUAL`
+- Zero sum: -a + a == 0
+    - Pass: `{stack: a} OP_DUP OP_NEGATE OP_ADD OP_0 OP_NUMEQUAL`
 
 ## OP_ABS (0x90)
 
