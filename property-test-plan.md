@@ -1,61 +1,79 @@
-# Property Test Plan
+# Property Test Plan for Big Integer Arithmetic Script Operations
 
 WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca_script_big_int/src/test/bigint_script_property_tests.cpp
 
-## OP_1ADD (0x8b)
+## Generic Tests
 
-1. Stack depth
+These test input and resulting stack depth, and operand's minimal encoding.
+They are repeated for each opcode.
+
+### Stack Depth Tests
+
+Generate and run these scripts for the tested `{opcode}`:
+
     - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
     - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
     - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-2. Minimal encoding
-    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
-    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
-3. Successor
-    - Pass: `<a> OP_DUP OP_1ADD OP_LESSTHAN`
-4. Result is always one more than the input
-    - Pass: `<a> OP_DUP OP_1ADD OP_SWAP OP_SUB OP_1 OP_NUMEQUAL`
-5. Symmetry with 1SUB
-    - Pass: `<a> OP_DUP OP_1ADD OP_1SUB OP_NUMEQUAL`
-6. Applying OP_1ADD a number of times is equivalent to adding the number.
-    - Pass: `<a> OP_DUP OP_3 OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_EQUAL`
-7. Overflow
-    - Pass: `<a> OP_1ADD OP_DROP OP_1`, for a < MAX
-    - Fail: `<a> OP_1ADD OP_DROP OP_1`, for a = MAX
-8. Output minimal encoding: implicitly tested in test 3.
+
+When failing, they must fail with `ScriptError::INVALID_STACK_OPERATION` error.
+
+### Minimally-encoded Operand Tests
+
+Generate and run these scripts for the tested `{opcode}`:
+
+    - Unary opcodes:
+        - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+        - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+    - Binary opcodes:
+        - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_SWAP {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_SWAP {opcode} OP_DROP OP_1`
+    - Trinary opcodes:
+        - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_ROT {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_ROT OP_ROT {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT OP_ROT {opcode} OP_DROP OP_1`
+
+Test scripts must all fail with `ScriptError::MINIMALNUM` error.
+
+### Minimally-encoded Result Tests
+
+This is tested implicitly by other property tests, because the result of tested opcode will be consumed by another arithmetic opcode, and that one would fail if it was not minimally-encoded.
+
+## OP_1ADD (0x8b)
+
+- Successor: a < op1add(a)
+    - Pass: `{stack: a} OP_DUP OP_1ADD OP_LESSTHAN`
+- Increment: op1add(a) - a == 1
+    - Pass: `{stack: a} OP_DUP OP_1ADD OP_SWAP OP_SUB OP_1 OP_NUMEQUAL`
+- Inverse: a == op1sub(op1add(a))
+    - Pass: `{stack: a} OP_DUP OP_1ADD OP_1SUB OP_NUMEQUAL`
+- Apply Multiple: a + 3 == op1add(op1add(op1add(a)))
+    - Pass: `{stack: a} OP_DUP OP_3 OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_NUMEQUAL`
+- Overflow (if test script fails then it must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT`):
+    - Pass: `{stack: a} OP_1ADD OP_DROP OP_1`, where a < MAX_SCRIPTNUM
+    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where a == MAX_SCRIPTNUM
 
 ## OP_1SUB (0x8c)
 
-1. Stack depth
-    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-2. Minimal encoding
-    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
-    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
-3. Predecessor
-    - Pass: `<a> OP_DUP OP_1SUB OP_GREATERTHAN`
-4. Result is always one less than the input.
-    - Pass: `<a> OP_DUP OP_1SUB OP_SUB OP_1 OP_NUMEQUAL`
-5. Symmetry with 1ADD
-    - Pass: `<a> OP_DUP OP_1SUB OP_1ADD OP_NUMEQUAL`
-6. Applying OP_1SUB a number of times is equivalent to subtracting the number.
-    - Pass: `<a> OP_DUP OP_3 OP_SUB OP_SWAP OP_1SUB OP_1SUB OP_1SUB OP_NUMEQUAL`
-7. Underflow
-    - Pass: `<a> OP_1SUB OP_DROP OP_1`, for a > MIN
-    - Fail: `<a> OP_1SUB OP_DROP OP_1`, for a = MIN
-8. Output minimal encoding: implicitly tested in test 3.
+- Predecessor: a > op1sub(a)
+    - Pass: `{stack: a} OP_DUP OP_1SUB OP_GREATERTHAN`
+- Decrement: a - op1sub(a) == 1
+    - Pass: `{stack: a} OP_DUP OP_1SUB OP_SUB OP_1 OP_NUMEQUAL`
+- Inverse: a == op1add(op1sub(a))
+    - Pass: `{stack: a} OP_DUP OP_1SUB OP_1ADD OP_NUMEQUAL`
+- Apply Multiple: a - 3 == op1sub(op1sub(op1sub(a)))
+    - Pass: `{stack: a} OP_DUP OP_3 OP_SUB OP_SWAP OP_1SUB OP_1SUB OP_1SUB OP_NUMEQUAL`
+- Underflow (if test script fails then it must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT`):
+    - Pass: `{stack: a} OP_1SUB OP_DROP OP_1`, where a > -MAX_SCRIPTNUM
+    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where a == -MAX_SCRIPTNUM
 
 ## OP_NEGATE (0x8f)
 
-1. Stack depth
-    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-2. Minimal encoding
-    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
-    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
-3. Double negation
+3. Double negation: a == !(!a)
     - Pass: `<a> OP_DUP OP_NEGATE OP_NEGATE OP_NUMEQUAL`
 4. Negation is equivalent to multiplying with -1
     - Pass: `<a> OP_DUP OP_NEGATE OP_1NEGATE OP_MUL OP_NUMEQUAL`
@@ -67,13 +85,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_ABS (0x90)
 
-1. Stack depth
-    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-2. Minimal encoding
-    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
-    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
 3. Absolute value of any positive number is the number itself
     - Pass: `<a> OP_DUP OP_ABS OP_NUMEQUAL` for a >= 0
     - Fail: `<a> OP_DUP OP_ABS OP_NUMEQUAL` for a < 0
@@ -84,13 +95,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_NOT (0x91)
 
-1. Stack depth
-    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-2. Minimal encoding
-    - Fail: `<0> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
 3. NOT of zero is one
     - Pass: `OP_0 OP_NOT OP_1 OP_NUMEQUAL`
 4. NOT of non-zero is zero
@@ -105,13 +109,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_0NOTEQUAL (0x92)
 
-1. Stack depth
-    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-2. Minimal encoding
-    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN <0x80> OP_CAT {opcode} OP_DROP OP_1`
-    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
 3. 0NOTEQUAL of zero is zero
     - Pass: `OP_0 OP_0NOTEQUAL OP_0 OP_NUMEQUAL`
 4. 0NOTEQUAL of non-zero is one
@@ -122,17 +119,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_ADD (0x93)
 
-1. Stack underflow must fail
-    - Fail: `OP_ADD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-    - Fail: `<1> OP_ADD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-2. Any non-numerical input value must fail
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_ADD OP_DROP OP_1`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SWAP OP_ADD OP_DROP OP_1`
-3. Any non-numerical zero input value must fail
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_ADD OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_ADD OP_DROP OP_1`
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SWAP OP_ADD OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SWAP OP_ADD OP_DROP OP_1`
 4. Commutativity: a + b == b + a
     - Pass: `<a> <b> OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
 5. Associativity: (a + b) + c == a + (b + c)
@@ -150,17 +136,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_SUB (0x94)
 
-1. Stack underflow must fail
-    - Fail: `OP_SUB OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-    - Fail: `<1> OP_SUB OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-2. Any non-numerical input value must fail
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SUB OP_DROP OP_1`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SWAP OP_SUB OP_DROP OP_1`
-3. Any non-numerical zero input value must fail
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SUB OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SUB OP_DROP OP_1`
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SWAP OP_SUB OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SWAP OP_SUB OP_DROP OP_1`
 4. Anti-commutativity: a - b == -(b - a)
     - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_NUMEQUAL`
 5. Non-associativity: (a - b) - c == a - (b + c)
@@ -180,17 +155,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_MUL (0x95)
 
-1. Stack underflow must fail
-    - Fail: `OP_MUL OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-    - Fail: `<1> OP_MUL OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-2. Any non-numerical input value must fail
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_MUL OP_DROP OP_1`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_0 OP_SWAP OP_MUL OP_DROP OP_1`
-3. Any non-numerical zero input value must fail
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_MUL OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_MUL OP_DROP OP_1`
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_0 OP_SWAP OP_MUL OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_0 OP_SWAP OP_MUL OP_DROP OP_1`
 4. Commutativity: a * b == b * a
     - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_NUMEQUAL`
 5. Associativity: (a * b) * c == a * (b * c)
@@ -219,17 +183,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_DIV (0x96)
 
-1. Stack underflow must fail
-    - Fail: `OP_DIV OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-    - Fail: `<1> OP_DIV OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-2. Any non-numerical input value must fail
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_DIV OP_DROP OP_1`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_SWAP OP_DIV OP_DROP OP_1`
-3. Any non-numerical zero input value must fail
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_DIV OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_DIV OP_DROP OP_1`
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_SWAP OP_DIV OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_SWAP OP_DIV OP_DROP OP_1`
 4. Consistency with inverse operation: (a / b) * b + (a % b) == a (for b != 0)
     - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_SWAP OP_2DUP OP_DIV OP_MUL OP_ROT OP_ADD OP_NUMEQUAL`
 5. Distributivity: (a + b) / c == a / c + b / c + (a % c + b % c - (a + b) % c) / c (for c != 0)
@@ -248,17 +201,6 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_MOD (0x97)
 
-1. Stack underflow must fail
-    - Fail: `OP_MOD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-    - Fail: `<1> OP_MOD OP_DEPTH OP_1 OP_NUMEQUAL OP_NIP`
-2. Any non-numerical input value must fail
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_MOD OP_DROP OP_1`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_1 OP_SWAP OP_MOD OP_DROP OP_1`
-3. Any non-numerical zero input value must fail
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_MOD OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_MOD OP_DROP OP_1`
-    - Fail: `<n> OP_0 OP_SWAP OP_NUM2BIN OP_1 OP_SWAP OP_MOD OP_DROP OP_1`
-    - Fail: `<n> OP_1SUB OP_0 OP_SWAP OP_NUM2BIN <0x80> OP_CAT OP_1 OP_SWAP OP_MOD OP_DROP OP_1`
 4. Power Identity: (a * a) % a == 0 (for a != 0).
     - Pass: `<a> OP_DUP OP_DUP OP_MUL OP_SWAP OP_MOD OP_NOT`
 5. Modulo by Zero:
@@ -277,37 +219,25 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 ## OP_BOOLAND (0x9a)
 
-1. Stack underflow must fail
-    - Fail: `OP_BOOLAND <1>`
-    - Fail: `<1> OP_BOOLAND <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_BOOLAND OP_DROP <1>`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_SWAP OP_BOOLAND OP_DROP <1>`
-3. Result is 1 if both inputs are non-zero, 0 otherwise
-    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_ROT OP_0NOTEQUAL OP_ROT OP_0NOTEQUAL OP_BOOLAND OP_EQUAL`
-4. Commutativity: (a && b) == (b && a)
-    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_SWAP OP_ROT OP_BOOLAND OP_EQUAL`
-5. Idempotence: (a && a) == (a != 0)
+3. Idempotence: (a && a) == (a != 0)
     - Pass: `<a> OP_DUP OP_DUP OP_BOOLAND OP_SWAP OP_0NOTEQUAL OP_EQUAL`
+4. Result is 1 if both inputs are non-zero, 0 otherwise
+    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_ROT OP_0NOTEQUAL OP_ROT OP_0NOTEQUAL OP_BOOLAND OP_EQUAL`
+5. Commutativity: (a && b) == (b && a)
+    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_SWAP OP_ROT OP_BOOLAND OP_EQUAL`
 6. De Morgan's law: !(a && b) == (!a || !b)
     - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLOR OP_EQUAL`
-7. Distributive law: (a || b) && c == (a && c) || (b && c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_BOOLOR OP_ROT OP_BOOLAND OP_ROT OP_ROT OP_3DUP OP_ROT OP_BOOLAND OP_ROT OP_ROT OP_BOOLAND OP_BOOLOR OP_EQUAL`
+7. Distributive law: ((a || b) && c) == ((a && c) || (b && c))
+    - Pass: `<a> <b> <c> OP_2 OP_PICK OP_2 OP_PICK OP_BOOLOR OP_OVER OP_BOOLAND OP_3 OP_ROLL OP_2 OP_PICK OP_BOOLAND OP_2SWAP OP_BOOLAND OP_BOOLOR OP_NUMEQUAL`
 
 ## OP_BOOLOR (0x9b)
 
-1. Stack underflow must fail
-    - Fail: `OP_BOOLOR <1>`
-    - Fail: `<1> OP_BOOLOR <1>`
-2. Any non-numerical value must fail.
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_BOOLOR OP_DROP <1>`
-    - Fail: `<a> <n> OP_SWAP OP_SIZE OP_ROT OP_SUB OP_NUM2BIN <1> OP_SWAP OP_BOOLOR OP_DROP <1>`
-3. Result is 1 if at least one input is non-zero, 0 otherwise
+5. Idempotence: (a || a) == (a != 0)
+    - Pass: `<a> OP_DUP OP_DUP OP_BOOLOR OP_SWAP OP_0NOTEQUAL OP_EQUAL`
+3. Result is 1 if at least one input is non-zero, 0 otherwise a || b == (a != 0) || (b != 0)
     - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_ROT OP_0NOTEQUAL OP_ROT OP_0NOTEQUAL OP_BOOLOR OP_EQUAL`
 4. Commutativity: (a || b) == (b || a)
     - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_SWAP OP_ROT OP_BOOLOR OP_EQUAL`
-5. Idempotence: (a || a) == (a != 0)
-    - Pass: `<a> OP_DUP OP_DUP OP_BOOLOR OP_SWAP OP_0NOTEQUAL OP_EQUAL`
 6. De Morgan's law: !(a || b) == (!a && !b)
     - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLAND OP_EQUAL`
 7. Absorption law: a || (a && b) == a
@@ -368,5 +298,3 @@ WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca
 
 1. Result is 1 if x is within the range [min, max], 0 otherwise
    Test template: `<x> <min> <max> OP_WITHIN <x> <min> OP_GREATERTHANOREQUAL <x> <max> OP_LESSTHANOREQUAL OP_BOOLAND OP_EQUAL`
-
-These test scripts can be used in conjunction with property-based testing to generate a wide range of inputs and verify the behavior of each operation in the BCHN virtual machine.
