@@ -122,7 +122,7 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
     - Fail: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where b <= 0 (must fail with `ScriptError::EVAL_FALSE` error)
 - Inverse: (a + b) - b == a
     - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_SUB OP_NUMEQUAL`
-- Output overflow & underflow behavior
+- Range:
     - Pass: `{stack: a, b} OP_ADD OP_DROP OP_1`, where `a + b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
     - Fail: `{stack: a, b} OP_ADD OP_DROP OP_1`, where `a + b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
 - Associativity: (a + b) + c == a + (b + c)
@@ -130,22 +130,21 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_SUB (0x94)
 
-4. Anti-commutativity: a - b == -(b - a)
-    - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_NUMEQUAL`
-5. Non-associativity: (a - b) - c == a - (b + c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_SUB OP_SWAP OP_2SWAP OP_SUB OP_SWAP OP_SUB OP_NUMEQUAL`
-6. Identity: a - 0 == a
-    - Pass: `<a> OP_DUP OP_0 OP_SUB OP_NUMEQUAL`
-7. Sign: 0 - a == -a
-    - Pass: `<a> OP_DUP OP_0 OP_SWAP OP_SUB OP_SWAP OP_NEGATE OP_NUMEQUAL`
-8. Predecessor: a - b < a
-    - Pass: `<a> <b> OP_OVER OP_SWAP OP_SUB OP_SWAP OP_LESSTHAN`
-9. Symmetry with addition: (a - b) + b == a
-    - Pass: `<a> <b> OP_2DUP OP_SUB OP_SWAP OP_ADD OP_NUMEQUAL`
-10. Output overflow & underflow behavior
-    - Pass: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is inside `[MIN, MAX]` range
-    - Fail: `<a> <b> OP_SUB OP_DROP OP_1` when `a - b` is outside `[MIN, MAX]` range
-11. Output minimal encoding: implicitly tested by OP_NEGATE in test 4.
+- Identity: a - 0 == a
+    - Pass: `{stack: a} OP_DUP OP_0 OP_SUB OP_NUMEQUAL`
+- Sign: 0 - a == -a
+    - Pass: `{stack: a} OP_0 OP_OVER OP_SUB OP_SWAP OP_NEGATE OP_NUMEQUAL`
+- Anti-commutativity: a - b == -(b - a)
+    - Pass: `{stack: a, b} OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_NUMEQUAL`
+- Predecessor: a > a - b
+    - Pass: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`
+- Inverse: (a - b) + b == a
+    - Pass: `{stack: a, b} OP_2DUP OP_SUB OP_ADD OP_NUMEQUAL`
+- Range:
+    - Pass: `{stack: a, b} OP_SUB OP_DROP OP_1`, where `a - b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
+    - Fail: `{stack: a, b} OP_SUB OP_DROP OP_1`, where `a - b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
+- Non-associativity: (a - b) - c == a - (b + c)
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_SUB OP_OVER OP_SUB OP_2SWAP OP_3 OP_ROLL OP_ADD OP_SUB OP_NUMEQUAL`
 
 ## OP_MUL (0x95)
 
