@@ -15,7 +15,7 @@ Generate and run these scripts for the tested `{opcode}`:
     - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
     - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
 
-When failing, they must fail with `ScriptError::INVALID_STACK_OPERATION` error.
+When failing, the above test scripts must fail with `ScriptError::INVALID_STACK_OPERATION` error.
 
 ### Minimally-encoded Operand Tests
 
@@ -37,7 +37,7 @@ Generate and run these scripts for the tested `{opcode}`:
         - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT {opcode} OP_DROP OP_1`
         - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT OP_ROT {opcode} OP_DROP OP_1`
 
-Test scripts must all fail with `ScriptError::MINIMALNUM` error.
+All above test scripts must fail with `ScriptError::MINIMALNUM` error.
 
 ### Minimally-encoded Result Tests
 
@@ -53,9 +53,9 @@ This is tested implicitly by other property tests, because the result of tested 
     - Pass: `{stack: a} OP_DUP OP_1ADD OP_1SUB OP_NUMEQUAL`
 - Apply Multiple: a + 3 == op1add(op1add(op1add(a)))
     - Pass: `{stack: a} OP_DUP OP_3 OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_NUMEQUAL`
-- Overflow (if test script fails then it must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT`):
+- Overflow
     - Pass: `{stack: a} OP_1ADD OP_DROP OP_1`, where a < MAX_SCRIPTNUM
-    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where a == MAX_SCRIPTNUM
+    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where a == MAX_SCRIPTNUM (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
 
 ## OP_1SUB (0x8c)
 
@@ -67,9 +67,9 @@ This is tested implicitly by other property tests, because the result of tested 
     - Pass: `{stack: a} OP_DUP OP_1SUB OP_1ADD OP_NUMEQUAL`
 - Apply Multiple: a - 3 == op1sub(op1sub(op1sub(a)))
     - Pass: `{stack: a} OP_DUP OP_3 OP_SUB OP_SWAP OP_1SUB OP_1SUB OP_1SUB OP_NUMEQUAL`
-- Underflow (if test script fails then it must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT`):
+- Underflow:
     - Pass: `{stack: a} OP_1SUB OP_DROP OP_1`, where a > -MAX_SCRIPTNUM
-    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where a == -MAX_SCRIPTNUM
+    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where a == -MAX_SCRIPTNUM (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
 
 ## OP_NEGATE (0x8f)
 
@@ -84,13 +84,12 @@ This is tested implicitly by other property tests, because the result of tested 
 
 ## OP_ABS (0x90)
 
-3. Absolute value of any positive number is the number itself
-    - Pass: `<a> OP_DUP OP_ABS OP_NUMEQUAL` for a >= 0
-    - Fail: `<a> OP_DUP OP_ABS OP_NUMEQUAL` for a < 0
-4. Negated absolute value of any negative number is the number itself
-    - Pass: `<a> OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL` for a <= 0
-    - Fail: `<a> OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL` for a > 0
-5. Output minimal encoding: implicitly tested in tests 3 & 4.
+- Absolute of a positive number: a == abs(a)
+    - Pass: `{stack: a} OP_DUP OP_ABS OP_NUMEQUAL`, where a >= 0
+    - Fail: `{stack: a} OP_DUP OP_ABS OP_NUMEQUAL`, where a < 0 (must fail with `ScriptError::EVAL_FALSE` error)
+- Absolute of a negative number: a == -abs(a)
+    - Pass: `{stack: a} OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL`, where a <= 0
+    - Fail: `{stack: a} OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL`, where a > 0 (must fail with `ScriptError::EVAL_FALSE` error)
 
 ## OP_NOT (0x91)
 
