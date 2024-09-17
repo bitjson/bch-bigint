@@ -93,17 +93,14 @@ This is tested implicitly by other property tests, because the result of tested 
 
 ## OP_NOT (0x91)
 
-3. NOT of zero is one
+- Zero: !0 == 1
     - Pass: `OP_0 OP_NOT OP_1 OP_NUMEQUAL`
-4. NOT of non-zero is zero
-    - Pass: `<a> OP_NOT OP_0 OP_NUMEQUAL`
-5. Double not
-    - Pass: `<a> OP_DUP OP_NOT OP_NOT OP_SWAP OP_0NOTEQUAL OP_NUMEQUAL`
-6. Distributivity I
-    - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLAND OP_EQUAL`
-7. Distributivity II
-    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLOR OP_EQUAL`
-8. Output minimal encoding: implicitly tested in test 5.
+- Non-zero: !a == 0
+    - Pass: `{stack: a} OP_NOT OP_0 OP_NUMEQUAL`, where a > 0
+- Double: !(!a) == !(a == 0)
+    - Pass: `{stack: a} OP_DUP OP_NOT OP_NOT OP_SWAP OP_0 OP_NUMEQUAL OP_NOT OP_NUMEQUAL`
+
+Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_BOOLOR](#op-boolor--0x9b).
 
 ## OP_0NOTEQUAL (0x92)
 
