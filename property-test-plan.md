@@ -148,31 +148,30 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_MUL (0x95)
 
-4. Commutativity: a * b == b * a
-    - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_NUMEQUAL`
-5. Associativity: (a * b) * c == a * (b * c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ROT OP_ROT OP_MUL OP_MUL OP_SWAP OP_2SWAP OP_ROT OP_MUL OP_MUL OP_NUMEQUAL`
-6. Distributivity: a * (b + c) == (a * b) + (a * c)
-    - Pass: `<a> <b> <c> OP_3DUP OP_ADD OP_MUL OP_SWAP OP_2SWAP OP_OVER OP_SWAP OP_MUL OP_SWAP OP_ROT OP_MUL OP_ADD OP_NUMEQUAL`
-7. Identity: x * 1 == 1 * x == x
-    - Pass: `<a> OP_DUP OP_1 OP_2DUP OP_SWAP OP_MUL OP_ROT OP_ROT OP_MUL OP_DUP OP_ROT OP_ROT OP_NUMEQUALVERIFY OP_NUMEQUAL`
-8. Negation: x * (-1) == -x
-    - Pass: `<a> OP_DUP OP_1NEGATE OP_MUL OP_SWAP OP_NEGATE OP_NUMEQUAL`
-9. Zero: x * 0 == 0 * x == 0
-    - Pass: `<a> OP_DUP OP_0 OP_MUL OP_NOT OP_VERIFY OP_0 OP_SWAP OP_MUL OP_NOT`
-10. Order: a * b < a * c
-    - Pass: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`, for a > 0 and b < c
-    - Fail: `<a> <b> <c> OP_SWAP OP_ROT OP_DUP OP_ROT OP_MUL OP_SWAP OP_ROT OP_MUL OP_LESSTHAN`, for a >= 0 and b >= c
-11. Symmetry with division: (a * b) / b == a
-    - Pass: `<a> <b> OP_2DUP OP_MUL OP_SWAP OP_DIV OP_NUMEQUAL`
-12. Adding a value to itself a number of times is equivalent to multiplying with a positive number.
-    - Pass: `<a> OP_DUP OP_4 OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_ADD OP_ADD OP_ADD OP_NUMEQUAL`
-13. Subtracting a value from itself a number of times is equivalent to multiplying with a negative number.
-    - Pass: `<a> OP_DUP OP_4 OP_NEGATE OP_MUL OP_SWAP OP_DUP OP_DUP OP_DUP OP_DUP OP_DUP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_SWAP OP_SUB OP_NUMEQUAL`
-14. Output overflow & underflow behavior
-    - Pass: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is inside `[MIN, MAX]` range
-    - Fail: `<a> <b> OP_MUL OP_DROP OP_1` when `a * b` is outside `[MIN, MAX]` range
-15. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 4.
+- Identity: a * 1 == a && 1 * a == a
+    - Pass: `{stack: a} OP_DUP OP_1 OP_MUL OP_OVER OP_NUMEQUAL OP_1 OP_2 OP_PICK OP_MUL OP_ROT OP_NUMEQUAL OP_BOOLAND`
+- Negation: a * (-1) == -a
+    - Pass: `{stack: a} OP_DUP OP_1NEGATE OP_MUL OP_SWAP OP_NEGATE OP_NUMEQUAL`
+- Zero: a * 0 == 0 && 0 * a == 0
+    - Pass: `{stack: a} OP_DUP OP_0 OP_MUL OP_0 OP_NUMEQUAL OP_0 OP_ROT OP_MUL OP_0 OP_NUMEQUAL OP_BOOLAND`
+- Equivalence with multiple additions: a * 4 == a + a + a + a
+    - Pass: `{stack: a} OP_DUP OP_4 OP_MUL OP_OVER OP_2 OP_PICK OP_ADD OP_2 OP_PICK OP_ADD OP_ROT OP_ADD OP_NUMEQUAL`
+- Equivalence with multiple subtractions: a * (-4) == a - a - a - a - a - a
+    - Pass: `{stack: a} OP_DUP OP_4 OP_NEGATE OP_MUL OP_OVER OP_2 OP_PICK OP_SUB OP_2 OP_PICK OP_SUB OP_2 OP_PICK OP_SUB OP_2 OP_PICK OP_SUB OP_ROT OP_SUB OP_NUMEQUAL`
+- Commutativity: a * b == b * a
+    - Pass: `{stack: a, b} OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_NUMEQUAL`
+- Inverse: (a * b) / b == a, where b != 0
+    - Pass: `{stack: a, b} OP_2DUP OP_MUL OP_SWAP OP_DIV OP_NUMEQUAL`
+- Range:
+    - Pass: `{stack: a, b} OP_MUL OP_DROP OP_1`, where `a * b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
+    - Fail: `{stack: a, b} OP_MUL OP_DROP OP_1`, where `a * b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
+- Order: a * b < a * c
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_ROT OP_MUL OP_ROT OP_ROT OP_MUL OP_LESSTHAN`, where (a > 0 and b < c) or (a < 0 and b > c)
+    - Fail: `{stack: a, b, c} OP_2 OP_PICK OP_ROT OP_MUL OP_ROT OP_ROT OP_MUL OP_LESSTHAN`, otherwise (must fail with `ScriptError::EVAL_FALSE` error)
+- Associativity: (a * b) * c == a * (b * c)
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_MUL OP_OVER OP_MUL OP_2SWAP OP_3 OP_ROLL OP_MUL OP_MUL OP_NUMEQUAL`
+- Distributivity: a * (b + c) == (a * b) + (a * c)
+    - Pass: `{stack: a, b, c} OP_3DUP OP_ADD OP_MUL OP_3 OP_PICK OP_3 OP_ROLL OP_MUL OP_2SWAP OP_MUL OP_ADD OP_NUMEQUAL`
 
 ## OP_DIV (0x96)
 
