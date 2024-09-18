@@ -242,12 +242,12 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_NUMEQUAL (0x9c)
 
-1. Result is 1 if inputs are equal, 0 otherwise
-   Test template: `<a> <b> OP_2DUP OP_NUMEQUAL OP_ROT OP_ROT OP_SUB <0> OP_EQUAL OP_EQUAL`
-2. Reflexivity: x NUMEQUAL x == 1
-   Test template: `<a> OP_DUP OP_NUMEQUAL <1> OP_EQUAL`
-3. Symmetry: a NUMEQUAL b == b NUMEQUAL a
-   Test template: `<a> <b> OP_NUMEQUAL <b> <a> OP_NUMEQUAL OP_EQUAL`
+- Reflexivity: (a == a) == true
+    - Pass: `{stack: a} OP_DUP OP_NUMEQUAL OP_1 OP_NUMEQUAL`
+- Commutativity: (a == b) == (b == a)
+    - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUAL OP_SWAP OP_ROT OP_NUMEQUAL OP_NUMEQUAL`
+- Equivalence: (a == b) == !((a < b) || (a > b))
+    - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUAL OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`
 
 ## OP_NUMEQUALVERIFY (0x9d)
 
