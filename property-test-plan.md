@@ -193,21 +193,18 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_MOD (0x97)
 
-4. Power Identity: (a * a) % a == 0 (for a != 0).
-    - Pass: `<a> OP_DUP OP_DUP OP_MUL OP_SWAP OP_MOD OP_NOT`
-5. Modulo by Zero:
-    - Fail: `<a> OP_0 OP_MOD OP_1 OP_DROP`
-6. Repeat Identity: (a % b) % b == a % b (for b != 0).
-    - Pass: `<a> <b> OP_2DUP OP_SWAP OP_OVER OP_MOD OP_SWAP OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
-7. Sign: a % b == a % (-b) (for b != 0).
-    - Pass: `<a> <b> OP_2DUP OP_MOD OP_ROT OP_ROT OP_NEGATE OP_MOD OP_NUMEQUAL`
-8. Negation: -(a % b) == (-a) % (-b) (for b != 0).
-    - Pass: `<a> <b> OP_2DUP OP_MOD OP_NEGATE OP_ROT OP_NEGATE OP_ROT OP_NEGATE OP_MOD OP_NUMEQUAL`
-9. Inverse: ((−a % b) + (a % b)) % b == 0 (for b != 0).
-    - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_NEGATE OP_SWAP OP_TUCK OP_MOD OP_ROT OP_ADD OP_SWAP OP_MOD OP_NOT`
-10. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 6.
-11. Consistency with MUL & DIV operations: (a / b) * b + (a % b) == a (for b != 0)
-    - Test is part of OP_DIV.
+- Power identity: (a * a) % a == 0, where a != 0
+    - Pass: `{stack: a} OP_DUP OP_DUP OP_MUL OP_SWAP OP_MOD OP_0 OP_NUMEQUAL`
+- Modulo by zero: a % 0 must fail.
+    - Fail: `{stack: a} OP_0 OP_MOD OP_DROP OP_1` (must fail with `ScriptError::MOD_BY_ZERO` error)
+- Repeat identity: (a % b) % b == a % b, where b != 0
+    - Pass: `{stack: a, b} OP_2DUP OP_MOD OP_OVER OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
+- Sign absorption: a % (-b) == a % b, where b != 0
+    - Pass: `{stack: a, b} OP_2DUP OP_NEGATE OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
+- Sign preservation: (-a) % b == -(a % b), where b != 0
+    - Pass: `{stack: a, b} OP_OVER OP_NEGATE OP_OVER OP_MOD OP_ROT OP_ROT OP_MOD OP_NEGATE OP_NUMEQUAL`
+- Consistency with OP_MUL and OP_DIV operations: (a / b) * b + (a % b) == a, where b != 0
+    - Test is part of OP_DIV tests
 
 ## OP_BOOLAND (0x9a)
 
