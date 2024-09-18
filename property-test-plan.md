@@ -208,16 +208,20 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_BOOLAND (0x9a)
 
-3. Idempotence: (a && a) == (a != 0)
-    - Pass: `<a> OP_DUP OP_DUP OP_BOOLAND OP_SWAP OP_0NOTEQUAL OP_EQUAL`
-4. Result is 1 if both inputs are non-zero, 0 otherwise
-    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_ROT OP_0NOTEQUAL OP_ROT OP_0NOTEQUAL OP_BOOLAND OP_EQUAL`
-5. Commutativity: (a && b) == (b && a)
-    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_SWAP OP_ROT OP_BOOLAND OP_EQUAL`
-6. De Morgan's law: !(a && b) == (!a || !b)
-    - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLOR OP_EQUAL`
-7. Distributive law: ((a || b) && c) == ((a && c) || (b && c))
-    - Pass: `<a> <b> <c> OP_2 OP_PICK OP_2 OP_PICK OP_BOOLOR OP_OVER OP_BOOLAND OP_3 OP_ROLL OP_2 OP_PICK OP_BOOLAND OP_2SWAP OP_BOOLAND OP_BOOLOR OP_NUMEQUAL`
+- Idempotence: (a && a) == (a != false)
+    - Pass: `{stack: a} OP_DUP OP_DUP OP_BOOLAND OP_SWAP OP_0 OP_NUMNOTEQUAL OP_NUMEQUAL`
+- Casting: (a && b) == (a != false && b != false)
+    - Pass: `{stack: a, b} OP_2DUP OP_BOOLAND OP_ROT OP_0 OP_NUMNOTEQUAL OP_ROT OP_0 OP_NUMNOTEQUAL OP_BOOLAND OP_NUMEQUAL`
+- Commutativity: (a && b) == (b && a)
+    - Pass: `{stack: a, b} OP_2DUP OP_BOOLAND OP_SWAP OP_ROT OP_BOOLAND OP_NUMEQUAL`
+- De Morgan's law: !(a && b) == (!a || !b)
+    - Pass: `{stack: a, b} OP_2DUP OP_BOOLAND OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLOR OP_NUMEQUAL`
+- Absorption: (a || (a && b)) == (a != false)
+    - Pass: `{stack: a, b} OP_OVER OP_2 OP_PICK OP_ROT OP_BOOLAND OP_BOOLOR OP_SWAP OP_0 OP_NUMNOTEQUAL OP_NUMEQUAL`
+- Associativity: ((a && b) && c) == (a && (b && c))
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_BOOLAND OP_OVER OP_BOOLAND OP_2SWAP OP_3 OP_ROLL OP_BOOLAND OP_BOOLAND OP_NUMEQUAL`
+- Distributivity: ((a || b) && c) == ((a && c) || (b && c))
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_BOOLOR OP_OVER OP_BOOLAND OP_3 OP_ROLL OP_2 OP_PICK OP_BOOLAND OP_2SWAP OP_BOOLAND OP_BOOLOR OP_NUMEQUAL`
 
 ## OP_BOOLOR (0x9b)
 
@@ -229,7 +233,7 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
     - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_SWAP OP_ROT OP_BOOLOR OP_EQUAL`
 6. De Morgan's law: !(a || b) == (!a && !b)
     - Pass: `<a> <b> OP_2DUP OP_BOOLOR OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLAND OP_EQUAL`
-7. Absorption law: a || (a && b) == a
+7. Absorptive law: a || (a && b) == a
     - Pass: `<a> <b> OP_2DUP OP_BOOLAND OP_ROT OP_DUP OP_ROT OP_BOOLOR OP_ROT OP_0NOTEQUAL OP_EQUAL`
 
 ## OP_NUMEQUAL (0x9c)
