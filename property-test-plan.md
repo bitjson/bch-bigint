@@ -137,7 +137,8 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 - Anti-commutativity: a - b == -(b - a)
     - Pass: `{stack: a, b} OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_NUMEQUAL`
 - Predecessor: a > a - b
-    - Pass: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`
+    - Pass: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`, where b > 0
+    - Fail: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`, where b <= 0 (must fail with `ScriptError::EVAL_FALSE` error)
 - Inverse: (a - b) + b == a
     - Pass: `{stack: a, b} OP_2DUP OP_SUB OP_ADD OP_NUMEQUAL`
 - Range:
@@ -175,21 +176,20 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_DIV (0x96)
 
-4. Consistency with inverse operation: (a / b) * b + (a % b) == a (for b != 0)
-    - Pass: `<a> <b> OP_2DUP OP_MOD OP_SWAP OP_ROT OP_SWAP OP_2DUP OP_DIV OP_MUL OP_ROT OP_ADD OP_NUMEQUAL`
-5. Distributivity: (a + b) / c == a / c + b / c + (a % c + b % c - (a + b) % c) / c (for c != 0)
-    - Pass: `<a> <b> <c> OP_2 OP_PICK OP_2 OP_PICK OP_ADD OP_OVER OP_DIV OP_3 OP_PICK OP_2 OP_PICK OP_DIV OP_2OVER OP_DIV OP_ADD OP_4 OP_PICK OP_3 OP_PICK OP_MOD OP_4 OP_PICK OP_4 OP_PICK OP_MOD OP_ADD OP_2ROT OP_ADD OP_4 OP_PICK OP_MOD OP_SUB OP_3 OP_ROLL OP_DIV OP_ADD OP_NUMEQUAL`
-6. Identity: a / 1 == a
-    - Pass: `<a> OP_DUP OP_1 OP_DIV OP_NUMEQUAL`
-7. Negation: a / (-1) == -a
-    - Pass: `<a> OP_DUP OP_1NEGATE OP_DIV OP_SWAP OP_NEGATE OP_NUMEQUAL`
-8. Self-division: a / a == 1 (for a != 0)
-    - Pass: `<a> OP_DUP OP_DIV OP_1 OP_NUMEQUAL`
-9. Dividing a zero: 0 / a == 0 (for a != 0)
-    - Pass: `<a> OP_0 OP_SWAP OP_DIV OP_0 OP_NUMEQUAL`
-10. Division by zero: a / 0 must fail.
-    - Fail: `<a> OP_0 OP_DIV OP_0 OP_NUMEQUAL`
-11. Output minimal encoding: implicitly tested by OP_NUMEQUAL in test 6.
+- Identity: a / 1 == a
+    - Pass: `{stack: a} OP_DUP OP_1 OP_DIV OP_NUMEQUAL`
+- Negation: a / (-1) == -a
+    - Pass: `{stack: a} OP_DUP OP_1NEGATE OP_DIV OP_SWAP OP_NEGATE OP_NUMEQUAL`
+- Division by zero: a / 0 must fail.
+    - Fail: `{stack: a} OP_0 OP_DIV OP_DROP OP_1` (must fail with `ScriptError::DIV_BY_ZERO` error)
+- Self-division: a / a == 1, where a != 0
+    - Pass: `{stack: a} OP_DUP OP_DIV OP_1 OP_NUMEQUAL`
+- Dividing a zero: 0 / a == 0, where a != 0
+    - Pass: `{stack: a} OP_0 OP_SWAP OP_DIV OP_0 OP_NUMEQUAL`
+- Inverse: (a / b) * b + (a % b) == a, where b != 0
+    - Pass: `{stack: a, b} OP_2DUP OP_DIV OP_OVER OP_MUL OP_2 OP_PICK OP_ROT OP_MOD OP_ADD OP_NUMEQUAL`
+- Distributivity: (a + b) / c == a / c + b / c + (a % c + b % c - (a + b) % c) / c, where c != 0
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_ADD OP_OVER OP_DIV OP_3 OP_PICK OP_2 OP_PICK OP_DIV OP_2OVER OP_DIV OP_ADD OP_4 OP_PICK OP_3 OP_PICK OP_MOD OP_4 OP_PICK OP_4 OP_PICK OP_MOD OP_ADD OP_2ROT OP_ADD OP_4 OP_PICK OP_MOD OP_SUB OP_3 OP_ROLL OP_DIV OP_ADD OP_NUMEQUAL`
 
 ## OP_MOD (0x97)
 
