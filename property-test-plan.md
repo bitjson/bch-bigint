@@ -329,5 +329,7 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_WITHIN (0xa5)
 
-1. Result is 1 if x is within the range [min, max], 0 otherwise
-   Test template: `<x> <min> <max> OP_WITHIN <x> <min> OP_GREATERTHANOREQUAL <x> <max> OP_LESSTHANOREQUAL OP_BOOLAND OP_EQUAL`
+- Reflexivity: within(a, a, a) == false
+    - Pass: `{stack: a} OP_DUP OP_DUP OP_WITHIN OP_0 OP_NUMEQUAL`
+- Equivalence: within(a, b, c) == (a >= b && a < c)
+    - Pass: `{stack: a, b, c} OP_3DUP OP_WITHIN OP_3 OP_PICK OP_3 OP_ROLL OP_GREATERTHANOREQUAL OP_2SWAP OP_LESSTHAN OP_BOOLAND OP_EQUAL`
