@@ -1,8 +1,13 @@
-### Locktime Opcodes
+# Specification: High-Precision Arithmetic Opcodes for Bitcoin Cash
 
-The upgrade DOES NOT change the behavior of OP_CHECKLOCKTIMEVERIFY (0xb1) and OP_CHECKSEQUENCEVERIFY (0xb2).
+Deployment of this specification is proposed for the May 2025 upgrade.
 
-### Script Number Encoding
+- Activation on `1731672000` MTP, (`2024-11-15T12:00:00.000Z`) on `chipnet`.
+- Activation on `1747310400` MTP, (`2025-05-15T12:00:00.000Z`) on the BCH network (`mainnet`), `testnet3`, `testnet4`, and `scalenet`.
+
+This proposal requires [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits).
+
+## Script Number Encoding
 
 The numbers are encoded as variable-length byte arrays in little endian byte order (least significant byte first).
 
@@ -17,7 +22,9 @@ This upgrade affects two non-arithmetic opcodes that are used to convert an arbi
 
 For reference, we will specify them below as well.
 
-#### OP_NUM2BIN (0x80)
+## Casting Operations
+
+### OP_NUM2BIN (0x80)
 
 Pop two items from stack.  
 The top-most value is read as a desired length of the output's stack item, and the other one as binary value to be converted.  
@@ -36,7 +43,7 @@ The value to be converted can be a padded number, so this opcode can be used to 
 Similarly, for negative numbers, executing it on `7b00000080` (-123) and `03` (3) will return `7b0080`.  
 If called on other encodings of 0 (like `00`, `80`, `0000`, `0080`) etc. it WILL NOT preserve the sign bit, and it will return a "positive" encoding of 0, e.g. executing it on `0080` (-0) and `03` (3) will return `000000` (0).
 
-#### OP_BIN2NUM (0x81)
+### OP_BIN2NUM (0x81)
 
 Pop one item from stack.  
 Decode the stack item to a numerical value using script number encoding scheme.  
@@ -50,7 +57,7 @@ This operation may reduce the size of the stack item but it will never increase 
 Before this upgrade, the operation would fail if it would have to return a value outside the int64 range.
 After this upgrade, the operation will never fail because it can not increase the size of the stack item so any byte sequence on stack will be decodeable.
 
-### Arithmetic Operations
+## Arithmetic Operations
 
 **General requirements**
 
@@ -59,36 +66,39 @@ If any of the input stack items is not a minimally-encoded script number then th
 The operation must fail if any resulting stack item would exceed `MAX_SCRIPT_ELEMENT_SIZE`.  
 Before this upgrade, the operation would fail if any resulting stack item would exceed `nMaxNumSize` which was set to 8 bytes.
 With this upgrade, that requirement has been removed and `MAX_SCRIPT_ELEMENT_SIZE` will be the new limit.
+The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) will set `MAX_SCRIPT_ELEMENT_SIZE` to 10,000 bytes, therefore valid range for results of arithmetic operations shall be the inclusive range:
+
+- `[-2^79999 + 1, 2^79999 - 1]`.
 
 Any result must be returned as a minimally encoded script number, e.g. number 1 is to be returned as `01` rather than `0100`, number -1 is to be returned as `81` rather than `0180`, and number 0 is to be returned as empty stack item rather than `00`.
 
-#### Unary Operations
+### Unary Operations
 
 Any unary operation must fail if executed on empty stack (stack depth of 0).
 
-##### OP_1ADD (0x8b)
+#### OP_1ADD (0x8b)
 
 Pop one item from stack, add 1 to the value, push the result on stack.
 This may increase the size of the stack item, e.g. if executed on `7f` (127) the result must be `ff00` (128).
 This may reduce the size of the stack item, e.g. if executed on `8080` (-128) the result must be `ff` (-127).
 
-##### OP_1SUB (0x8c)
+#### OP_1SUB (0x8c)
 
 Pop one item from stack, subtract 1 from the value, push the result on stack.
 This may increase the size of the stack item, e.g. if executed on `ff` (-127) the result must be `8080` (-128).
 This may reduce the size of the stack item, e.g. if executed on `ff00` (128) the result must be `7f` (127).
 
-##### OP_NEGATE (0x8f)
+#### OP_NEGATE (0x8f)
 
 Pop one item from stack, if it is nonzero, flip the sign, if it is zero, leave the item unchanged. In either case, push the result on stack.
 This will always result in the input operand and the result having the same byte size.
 
-##### OP_ABS (0x90)
+#### OP_ABS (0x90)
 
 Pop one item from stack, if value is negative flip the sign else do nothing, push the result on stack.
 This will result in same size of the result.
 
-##### OP_NOT (0x91)
+#### OP_NOT (0x91)
 
 Pop one item from stack.
 If value is 0 change it to 1, else (for any other value) change it to 0.
@@ -96,7 +106,7 @@ Push the result on the stack.
 This may reduce the size of the stack item to 0, e.g. if executed on `aabbdd` the result will be an empty stack item (0), size of which is 0.
 Or, it may increase the size of the stack item from 0 to 1, e.g. if executed on an empty stack item (0) it will yield `01`.
 
-##### OP_0NOTEQUAL (0x92)
+#### OP_0NOTEQUAL (0x92)
 
 Pop one item from stack.
 If value is not 0 change it to 1.
@@ -105,27 +115,27 @@ Push the result on stack.
 This may reduce the size of the stack item to 1, e.g. if executed on `aabbdd` the result will be `01` (1), size of which is 1.
 If executed for an empty stack item (0), it will leave the top stack item unchanged.
 
-#### Binary Operations
+### Binary Operations
 
 Any binary operation must fail if executed on stack depth of 1 or less.
 
-##### OP_ADD (0x93)
+#### OP_ADD (0x93)
 
 Pop two items from stack, add the values together, push the result on stack.
 
-##### OP_SUB (0x94)
+#### OP_SUB (0x94)
 
 Pop two items from stack, subtract the top-most value from the other one, push the result on stack.
 
-##### OP_MUL (0x95)
+#### OP_MUL (0x95)
 
 Pop two items from stack, multiply the values together, push the result on stack.
 
-##### OP_DIV (0x96)
+#### OP_DIV (0x96)
 
 Pop two items from stack.
 If the top-most item (divisor) is 0, fail immediately.
-Divide the 2nd-to-top value (dividend) with the top-most value (divisor).
+Using *truncated division* divide the 2nd-to-top value (dividend) with the top-most value (divisor).
 Push the **quotient** to stack, e.g.
 
 - 3/2 will return 1,
@@ -133,11 +143,11 @@ Push the **quotient** to stack, e.g.
 - 3/-2 will return -1, and
 - -3/-2 will return 1.
 
-##### OP_MOD (0x97)
+#### OP_MOD (0x97)
 
 Pop two items from stack.
 If the top-most item (divisor) is 0, fail immediately.
-Divide the 2nd-to-top value (dividend) with the top-most value (divisor).
+Using *truncated division* divide the 2nd-to-top value (dividend) with the top-most value (divisor).
 Push the **remainder** to stack.
 The sign of the result will match the sign of the dividend, e.g.
 
@@ -146,57 +156,57 @@ The sign of the result will match the sign of the dividend, e.g.
 - 7/-3 will return 1, and
 - -7/-3 will return -1.
 
-##### OP_BOOLAND (0x9a)
+#### OP_BOOLAND (0x9a)
 
 Pop two items from stack.
 If both numbers are non-zero then return 1, else return 0.
 
-##### OP_BOOLOR (0x9b)
+#### OP_BOOLOR (0x9b)
 
 Pop two items from stack.
 If at least one of the numbers is non-zero then return 1, else return 0.
 
-##### OP_NUMEQUAL (0x9c)
+#### OP_NUMEQUAL (0x9c)
 
 Pop two items from stack.
 If the two numbers are equal then return 1, else return 0.
 
-##### OP_NUMEQUALVERIFY (0x9d)
+#### OP_NUMEQUALVERIFY (0x9d)
 
 Pop two items from stack.
 If the two numbers are equal then continue evaluation with nothing returned to stack, else fail.
 
-##### OP_NUMNOTEQUAL (0x9e)
+#### OP_NUMNOTEQUAL (0x9e)
 
 Pop two items from stack.
 If the two numbers are not equal then return 1, else return 0.
 
-##### OP_LESSTHAN (0x9f)
+#### OP_LESSTHAN (0x9f)
 
 Pop two items from stack.
 If the 2nd-to-top value is less than the top-most value then return 1, else return 0.
 
-##### OP_GREATERTHAN (0xa0)
+#### OP_GREATERTHAN (0xa0)
 
 Pop two items from stack.
 If the 2nd-to-top value is greater than the top-most value then return 1, else return 0.
 
-##### OP_LESSTHANOREQUAL (0xa1)
+#### OP_LESSTHANOREQUAL (0xa1)
 
 Pop two items from stack.
 If 2nd-to-top value is less than or equal to the top-most value then return 1, else return 0.
 
-##### OP_GREATERTHANOREQUAL (0xa2)
+#### OP_GREATERTHANOREQUAL (0xa2)
 
 Pop two items from stack.
 If 2nd-to-top value is greater than or equal to the top-most value then return 1, else return 0.
 
-##### OP_MIN (0xa3)
+#### OP_MIN (0xa3)
 
 Pop two items from stack.
 Return the lesser of the 2 values (if they're equal just return any one value).
 
-##### OP_MAX (0xa4)
+#### OP_MAX (0xa4)
 
 Pop two items from stack.
 Return the greater of the 2 values (if they're equal just return any one value).
@@ -205,7 +215,7 @@ Return the greater of the 2 values (if they're equal just return any one value).
 
 Any ternary operation must fail if executed on stack depth of 2 or less.
 
-##### OP_WITHIN (0xa5)
+#### OP_WITHIN (0xa5)
 
 Pop three items from stack.  
 The top-most item defines the "right" and non-inclusive boundary of a range.  

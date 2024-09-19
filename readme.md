@@ -47,7 +47,11 @@ Because this proposal allows existing contracts to remove higher-precision math 
 The limit on the maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`) is removed.
 The numbers will still be limited, by the maximum stack item size (A.K.A. `MAX_SCRIPT_ELEMENT_SIZE`).
 
-For reference, here we will specify the whole set of affected operations.
+For reference and implementation clarity, we attach a full specification for the whole set of affected opcodes, updated with this proposal's changes:
+
+- [Specification: High-Precision Arithmetic Opcodes for Bitcoin Cash](./spec.md)
+
+**Note: the upgrade DOES NOT change the behavior of OP_CHECKLOCKTIMEVERIFY (0xb1) and OP_CHECKSEQUENCEVERIFY (0xb2).**
 
 ## Rationale
 
