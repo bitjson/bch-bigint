@@ -304,8 +304,14 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_GREATERTHANOREQUAL (0xa2)
 
-1. Result is 1 if first input is greater than or equal to second, 0 otherwise
-   Test template: `<a> <b> OP_GREATERTHANOREQUAL <b> <a> OP_LESSTHANOREQUAL OP_EQUAL`
+- Reflexivity: (a >= a) == true
+    - Pass: `{stack: a} OP_DUP OP_GREATERTHANOREQUAL OP_1 OP_NUMEQUAL`
+- Anti-commutativity: (a >= b) == (-b >= -a)
+    - Pass: `{stack: a, b} OP_2DUP OP_GREATERTHANOREQUAL OP_SWAP OP_NEGATE OP_ROT OP_NEGATE OP_GREATERTHANOREQUAL OP_EQUAL`
+- Equivalence: (a >= b) == !(a < b)
+    - Pass: `{stack: a, b} OP_2DUP OP_GREATERTHANOREQUAL OP_ROT OP_ROT OP_LESSTHAN OP_NOT OP_EQUAL`
+- Transitivity: ((a >= c) && (a >= b) && (b >= c)) == ((a >= b) && (b >= c))
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_OVER OP_GREATERTHANOREQUAL OP_2OVER OP_GREATERTHANOREQUAL OP_BOOLAND OP_2 OP_PICK OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_BOOLAND OP_3 OP_ROLL OP_3 OP_PICK OP_GREATERTHANOREQUAL OP_2SWAP OP_GREATERTHANOREQUAL OP_BOOLAND OP_EQUAL`
 
 ## OP_MIN (0xa3)
 
