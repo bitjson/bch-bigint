@@ -322,8 +322,10 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_MAX (0xa4)
 
-1. Result is the larger of the two inputs
-   Test template: `<a> <b> OP_MAX OP_DUP <a> OP_GREATERTHANOREQUAL OP_SWAP <b> OP_GREATERTHANOREQUAL OP_BOOLAND`
+- Identity: max(a, a) == a
+    - Pass: `{stack: a} OP_DUP OP_DUP OP_MAX OP_NUMEQUAL`
+- Order: (max(a, b) >= a && max(a, b) >= b) == true
+    - Pass: `{stack: a} OP_2DUP OP_MAX OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_ROT OP_2 OP_PICK OP_MAX OP_ROT OP_GREATERTHANOREQUAL OP_BOOLAND OP_1 OP_EQUAL`
 
 ## OP_WITHIN (0xa5)
 
