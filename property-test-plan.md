@@ -1,7 +1,5 @@
 # Property Test Plan for Big Integer Arithmetic Script Operations
 
-WIP implementation: https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/wip_bca_script_big_int/src/test/bigint_script_property_tests.cpp
-
 ## Generic Tests
 
 These test input and resulting stack depth, and operand's minimal encoding.
