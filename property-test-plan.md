@@ -315,8 +315,10 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_MIN (0xa3)
 
-1. Result is the smaller of the two inputs
-   Test template: `<a> <b> OP_MIN OP_DUP <a> OP_LESSTHANOREQUAL OP_SWAP <b> OP_LESSTHANOREQUAL OP_BOOLAND`
+- Identity: min(a, a) == a
+    - Pass: `{stack: a} OP_DUP OP_DUP OP_MIN OP_NUMEQUAL`
+- Order: (min(a, b) <= a && min(a, b) <= b) == true
+    - Pass: `{stack: a} OP_2DUP OP_MIN OP_2 OP_PICK OP_LESSTHANOREQUAL OP_ROT OP_2 OP_PICK OP_MIN OP_ROT OP_LESSTHANOREQUAL OP_BOOLAND OP_1 OP_EQUAL`
 
 ## OP_MAX (0xa4)
 
