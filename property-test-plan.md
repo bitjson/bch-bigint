@@ -1,5 +1,41 @@
 # Property Test Plan for Big Integer Arithmetic Script Operations
 
+## Assumptions
+
+Maximum script number is defined based on maximum stack item size:
+
+- `MAX_SCRIPTNUM == 2^(MAX_ELEM_SIZE * 8 - 1) - 1`.
+
+Minimum script number is defined as maximum script number negated:
+
+- `MIN_SCRIPTNUM == -MAX_SCRIPTNUM`.
+
+## General Test Requirements
+
+Except for specific overflow and underflow tests, tests must not fail with stack element size or overflow error.
+
+Tests must cover full valid range and edges of both positive and negative ranges, e.g. a single parameter will be tested for values at the edges of these two ranges:
+
+- [MIN_SCRIPNUM, 0) and [0, MAX_SCRIPTNUM],
+
+meaning values MIN_SCRIPNUM, 0, MAX_SCRIPTNUM will definitely get tested, alongside a pick of random values in the range.
+
+If the test could overflow for some inputs (due to possibility of involved opcodes outputting bigger outputs than inputs), then test range should be reduced, e.g. the test:
+
+- Pass: `{stack: a} OP_DUP OP_1ADD OP_SWAP OP_SUB OP_1 OP_NUMEQUAL`
+
+will will have range of `a` reduced to:
+
+- [MIN_SCRIPNUM, 0) and [0, MAX_SCRIPTNUM - 1].
+
+For tests with multiple operands, all combinations should be tested.
+To avoid overflow, we must reduce the range for following variable, e.g. for the test:
+
+    - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
+
+we must first pick a random `a` from `[0, MAX_SCRIPTNUM]` and then pick a random `b` from `[0, MAX_SCRIPTNUM - b]`.
+We will iterate such test for all the combinations of edges of `a` and `b`, and a random pick of values between.
+
 ## Generic Tests
 
 These test input and resulting stack depth, and operand's minimal encoding.
