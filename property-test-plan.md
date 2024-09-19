@@ -255,10 +255,10 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
     - Pass: `{stack: a} OP_DUP OP_NUMEQUALVERIFY OP_1 OP_1 OP_NUMEQUAL`
 - Commutativity: (a == b) == (b == a)
     - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where a == b
-    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where a != b
+    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where a != b (must fail with `ScriptError::EVAL_FALSE` error)
 - Equivalence: (a == b) == !((a < b) || (a > b))
     - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where a == b
-    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where a != b
+    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where a != b (must fail with `ScriptError::EVAL_FALSE` error)
 
 ## OP_NUMNOTEQUAL (0x9e)
 
@@ -271,10 +271,14 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
 
 ## OP_LESSTHAN (0x9f)
 
-1. Result is 1 if first input is less than second, 0 otherwise
-   Test template: `<a> <b> OP_2DUP OP_LESSTHAN OP_ROT OP_ROT OP_SUB <0> OP_LESSTHAN OP_EQUAL`
-2. Transitivity: if a < b and b < c, then a < c
-   Test template: `<a> <b> <c> OP_3DUP OP_ROT OP_SWAP OP_LESSTHAN OP_SWAP OP_ROT OP_LESSTHAN OP_2SWAP OP_LESSTHAN OP_BOOLAND OP_LESSTHAN OP_NOT`
+- Reflexivity: (a < a) == false
+    - Pass: `{stack: a} OP_DUP OP_LESSTHAN OP_0 OP_NUMEQUAL`
+- Anti-commutativity: (a < b) == (-b < -a)
+    - Pass: `{stack: a, b} OP_2DUP OP_LESSTHAN OP_SWAP OP_NEGATE OP_ROT OP_NEGATE OP_LESSTHAN OP_EQUAL`
+- Equivalence: (a < b) == !((a == b) || (a > b))
+    - Pass: `{stack: a, b} OP_2DUP OP_NUMNOTEQUAL OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NUMEQUAL`
+- Transitivity: ((a < c) && (a < b) && (b < c)) == ((a < b) && (b < c))
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_OVER OP_LESSTHAN OP_2OVER OP_LESSTHAN OP_BOOLAND OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_BOOLAND OP_3 OP_ROLL OP_3 OP_PICK OP_LESSTHAN OP_2SWAP OP_LESSTHAN OP_BOOLAND OP_EQUAL`
 
 ## OP_GREATERTHAN (0xa0)
 
