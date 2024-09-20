@@ -63,7 +63,7 @@ Applications include hashrate prediction markets, gambling / lottery application
 - Contracts wanting to implement custom operations on elliptic curve(s), e.g. [key tweaking](https://bitcoin.stackexchange.com/questions/110402/how-to-tweak-a-public-key-for-taproot), amount blinding schemes ([confidential transactions](https://elementsproject.org/features/confidential-transactions)), or signature verification using other ellpitic curves than Bitcoin's secp256k1.
 These operations would similarly require 513-bit signed integer support (for 256-bit keys).
 - Contracts wanting to verify Rivest-Shamir-Adleman (RSA) signatures, these operations would require 8193-bit signed integer support (for 4096-bit keys).
-- Contracts wanting to implement more advanced cryptography, such as implementing zero-knowledge scalable transparent argument of knowledge (ZK-STARK) proof verification.
+- Contracts wanting to implement more advanced cryptography, such as post-quantum cryptography and zero-knowledge scalable transparent argument of knowledge (ZK-STARK) proof verification.
 
 ## Technical Specification
 
