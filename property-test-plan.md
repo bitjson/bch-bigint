@@ -31,7 +31,7 @@ will have the test range of `a` reduced to:
 For tests with multiple operands, all combinations should be tested.
 To avoid overflow, in some cases we must reduce the range for the following variable(s), e.g. for the test:
 
-    - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
+- Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
 
 we must first pick a random `a` from `[0, MAX_SCRIPTNUM]` and then pick a random `b` from `[0, MAX_SCRIPTNUM - b]`.
 We will iterate such test for all the combinations of edges of `a` and `b`, and random picks of values between.
