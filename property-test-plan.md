@@ -16,7 +16,7 @@ Except for specific overflow and underflow tests, tests must not fail with stack
 
 Tests must cover full valid range and edges of both positive and negative ranges, e.g. a single parameter will be tested for values at the edges of these two ranges:
 
-- [MIN_SCRIPNUM, 0) and [0, MAX_SCRIPTNUM],
+- `[MIN_SCRIPNUM, 0)` and `[0, MAX_SCRIPTNUM]`,
 
 meaning values MIN_SCRIPNUM, 0, MAX_SCRIPTNUM will definitely get tested, alongside a pick of random values in the range.
 
@@ -26,7 +26,7 @@ If the test could overflow for some inputs (due to possibility of involved opcod
 
 will have the test range of `a` reduced to:
 
-- [MIN_SCRIPNUM, 0) and [0, MAX_SCRIPTNUM - 1].
+- `[MIN_SCRIPNUM, 0)` and `[0, MAX_SCRIPTNUM - 1]`.
 
 For tests with multiple operands, all combinations should be tested.
 To avoid overflow, in some cases we must reduce the range for the following variable(s), e.g. for the test:
@@ -45,9 +45,9 @@ They are repeated for each opcode.
 
 Generate and run these scripts for the tested `{opcode}`:
 
-    - Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
-    - Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+- Fail: `{undersized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+- Pass: `{exact-sized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
+- Fail: `{oversized stack} {opcode} OP_DEPTH OP_{depthOut} OP_NUMEQUALVERIFY {OP_DROP x depthOut} OP_1`
 
 When failing, the above test scripts must fail with `ScriptError::INVALID_STACK_OPERATION` error.
 
@@ -55,21 +55,21 @@ When failing, the above test scripts must fail with `ScriptError::INVALID_STACK_
 
 Generate and run these scripts for the tested `{opcode}`:
 
-    - Unary opcodes:
-        - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
-    - Binary opcodes:
-        - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_SWAP {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_SWAP {opcode} OP_DROP OP_1`
-    - Trinary opcodes:
-        - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_ROT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_ROT OP_ROT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT OP_ROT {opcode} OP_DROP OP_1`
+- Unary opcodes:
+    - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+- Binary opcodes:
+    - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_SWAP {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_SWAP {opcode} OP_DROP OP_1`
+- Trinary opcodes:
+    - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_ROT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_ROT OP_ROT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, c, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT OP_ROT {opcode} OP_DROP OP_1`
 
 All above test scripts must fail with `ScriptError::MINIMALNUM` error.
 
@@ -89,7 +89,7 @@ This is tested implicitly by other property tests, because the result of tested 
     - Pass: `{stack: a} OP_DUP OP_3 OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_NUMEQUAL`
 - Overflow
     - Pass: `{stack: a} OP_1ADD OP_DROP OP_1`, where `a < MAX_SCRIPTNUM`
-    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where `a == MAX_SCRIPTNUM` (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
+    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where `a == MAX_SCRIPTNUM` (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
 
 ## OP_1SUB (0x8c)
 
@@ -103,7 +103,7 @@ This is tested implicitly by other property tests, because the result of tested 
     - Pass: `{stack: a} OP_DUP OP_3 OP_SUB OP_SWAP OP_1SUB OP_1SUB OP_1SUB OP_NUMEQUAL`
 - Underflow:
     - Pass: `{stack: a} OP_1SUB OP_DROP OP_1`, where `a > -MAX_SCRIPTNUM`
-    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where `a == -MAX_SCRIPTNUM` (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
+    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where `a == -MAX_SCRIPTNUM` (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
 
 ## OP_NEGATE (0x8f)
 
@@ -134,7 +134,7 @@ This is tested implicitly by other property tests, because the result of tested 
 - Double: `!(!a) == !(a == 0)`
     - Pass: `{stack: a} OP_DUP OP_NOT OP_NOT OP_SWAP OP_0 OP_NUMEQUAL OP_NOT OP_NUMEQUAL`
 
-Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_BOOLOR](#op-boolor--0x9b).
+Note: De Morgan's laws are tested under [OP_BOOLAND](#op_booland-0x9a) and [OP_BOOLOR](#op_boolor-0x9b)
 
 ## OP_0NOTEQUAL (0x92)
 
@@ -237,8 +237,8 @@ Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_
     - Pass: `{stack: a, b} OP_2DUP OP_NEGATE OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
 - Sign preservation: `(-a) % b == -(a % b)`, where `b != 0`
     - Pass: `{stack: a, b} OP_OVER OP_NEGATE OP_OVER OP_MOD OP_ROT OP_ROT OP_MOD OP_NEGATE OP_NUMEQUAL`
-- Consistency with OP_MUL and OP_DIV operations: `(a / b) * b + (a % b) == a`, where `b != 0`
-    - Test is part of OP_DIV tests
+
+Note: consistency with OP_MUL and OP_DIV operations is part of [OP_DIV](#op_div-0x96) tests.
 
 ## OP_BOOLAND (0x9a)
 
