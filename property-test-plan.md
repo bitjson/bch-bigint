@@ -24,17 +24,17 @@ If the test could overflow for some inputs (due to possibility of involved opcod
 
 - Pass: `{stack: a} OP_DUP OP_1ADD OP_SWAP OP_SUB OP_1 OP_NUMEQUAL`
 
-will will have range of `a` reduced to:
+will have the test range of `a` reduced to:
 
 - [MIN_SCRIPNUM, 0) and [0, MAX_SCRIPTNUM - 1].
 
 For tests with multiple operands, all combinations should be tested.
-To avoid overflow, we must reduce the range for following variable, e.g. for the test:
+To avoid overflow, in some cases we must reduce the range for the following variable(s), e.g. for the test:
 
     - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
 
 we must first pick a random `a` from `[0, MAX_SCRIPTNUM]` and then pick a random `b` from `[0, MAX_SCRIPTNUM - b]`.
-We will iterate such test for all the combinations of edges of `a` and `b`, and a random pick of values between.
+We will iterate such test for all the combinations of edges of `a` and `b`, and random picks of values between.
 
 ## Generic Tests
 
@@ -57,7 +57,7 @@ Generate and run these scripts for the tested `{opcode}`:
 
     - Unary opcodes:
         - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
-        - Fail: `{stack: 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+        - Fail: `{stack: a, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
     - Binary opcodes:
         - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
         - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT OP_SWAP {opcode} OP_DROP OP_1`
@@ -79,291 +79,291 @@ This is tested implicitly by other property tests, because the result of tested 
 
 ## OP_1ADD (0x8b)
 
-- Successor: a < op1add(a)
+- Successor: `a < op1add(a)`
     - Pass: `{stack: a} OP_DUP OP_1ADD OP_LESSTHAN`
-- Increment: op1add(a) - a == 1
+- Increment: `op1add(a) - a == 1`
     - Pass: `{stack: a} OP_DUP OP_1ADD OP_SWAP OP_SUB OP_1 OP_NUMEQUAL`
-- Inverse: a == op1sub(op1add(a))
+- Inverse: `a == op1sub(op1add(a))`
     - Pass: `{stack: a} OP_DUP OP_1ADD OP_1SUB OP_NUMEQUAL`
-- Apply Multiple: a + 3 == op1add(op1add(op1add(a)))
+- Apply Multiple: `a + 3 == op1add(op1add(op1add(a)))`
     - Pass: `{stack: a} OP_DUP OP_3 OP_ADD OP_SWAP OP_1ADD OP_1ADD OP_1ADD OP_NUMEQUAL`
 - Overflow
-    - Pass: `{stack: a} OP_1ADD OP_DROP OP_1`, where a < MAX_SCRIPTNUM
-    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where a == MAX_SCRIPTNUM (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
+    - Pass: `{stack: a} OP_1ADD OP_DROP OP_1`, where `a < MAX_SCRIPTNUM`
+    - Fail: `{stack: a} OP_1ADD OP_DROP OP_1`, where `a == MAX_SCRIPTNUM` (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
 
 ## OP_1SUB (0x8c)
 
-- Predecessor: a > op1sub(a)
+- Predecessor: `a > op1sub(a)`
     - Pass: `{stack: a} OP_DUP OP_1SUB OP_GREATERTHAN`
-- Decrement: a - op1sub(a) == 1
+- Decrement: `a - op1sub(a) == 1`
     - Pass: `{stack: a} OP_DUP OP_1SUB OP_SUB OP_1 OP_NUMEQUAL`
-- Inverse: a == op1add(op1sub(a))
+- Inverse: `a == op1add(op1sub(a))`
     - Pass: `{stack: a} OP_DUP OP_1SUB OP_1ADD OP_NUMEQUAL`
-- Apply Multiple: a - 3 == op1sub(op1sub(op1sub(a)))
+- Apply Multiple: `a - 3 == op1sub(op1sub(op1sub(a)))`
     - Pass: `{stack: a} OP_DUP OP_3 OP_SUB OP_SWAP OP_1SUB OP_1SUB OP_1SUB OP_NUMEQUAL`
 - Underflow:
-    - Pass: `{stack: a} OP_1SUB OP_DROP OP_1`, where a > -MAX_SCRIPTNUM
-    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where a == -MAX_SCRIPTNUM (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
+    - Pass: `{stack: a} OP_1SUB OP_DROP OP_1`, where `a > -MAX_SCRIPTNUM`
+    - Fail: `{stack: a} OP_1SUB OP_DROP OP_1`, where `a == -MAX_SCRIPTNUM` (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error):
 
 ## OP_NEGATE (0x8f)
 
-- Zero negation: -0 == 0
+- Zero negation: `-0 == 0`
     - Pass: `OP_0 OP_NEGATE OP_0 OP_NUMEQUAL`
-- Double negation: a == -(-a)
+- Double negation: `a == -(-a)`
     - Pass: `{stack: a} OP_DUP OP_NEGATE OP_NEGATE OP_NUMEQUAL`
-- Multiplication equivalence: -a == a * (-1)
+- Multiplication equivalence: `-a == a * (-1)`
     - Pass: `{stack: a} OP_DUP OP_NEGATE OP_SWAP OP_1NEGATE OP_MUL OP_NUMEQUAL`
-- Zero sum: -a + a == 0
+- Zero sum: `-a + a == 0`
     - Pass: `{stack: a} OP_DUP OP_NEGATE OP_ADD OP_0 OP_NUMEQUAL`
 
 ## OP_ABS (0x90)
 
-- Absolute of a positive number: a == abs(a)
-    - Pass: `{stack: a} OP_DUP OP_ABS OP_NUMEQUAL`, where a >= 0
-    - Fail: `{stack: a} OP_DUP OP_ABS OP_NUMEQUAL`, where a < 0 (must fail with `ScriptError::EVAL_FALSE` error)
-- Absolute of a negative number: a == -abs(a)
-    - Pass: `{stack: a} OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL`, where a <= 0
-    - Fail: `{stack: a} OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL`, where a > 0 (must fail with `ScriptError::EVAL_FALSE` error)
+- Absolute of a positive number: `a == abs(a)`
+    - Pass: `{stack: a} OP_DUP OP_ABS OP_NUMEQUAL`, where `a >= 0`
+    - Fail: `{stack: a} OP_DUP OP_ABS OP_NUMEQUAL`, where `a < 0` (must fail with `ScriptError::EVAL_FALSE` error)
+- Absolute of a negative number: `a == -abs(a)`
+    - Pass: `{stack: a} OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL`, where `a <= 0`
+    - Fail: `{stack: a} OP_DUP OP_ABS OP_NEGATE OP_NUMEQUAL`, where `a > 0` (must fail with `ScriptError::EVAL_FALSE` error)
 
 ## OP_NOT (0x91)
 
-- Zero: !0 == 1
+- Zero: `!0 == 1`
     - Pass: `OP_0 OP_NOT OP_1 OP_NUMEQUAL`
-- Non-zero: !a == 0
-    - Pass: `{stack: a} OP_NOT OP_0 OP_NUMEQUAL`, where a > 0
-- Double: !(!a) == !(a == 0)
+- Non-zero: `!a == 0`
+    - Pass: `{stack: a} OP_NOT OP_0 OP_NUMEQUAL`, where `a > 0`
+- Double: `!(!a) == !(a == 0)`
     - Pass: `{stack: a} OP_DUP OP_NOT OP_NOT OP_SWAP OP_0 OP_NUMEQUAL OP_NOT OP_NUMEQUAL`
 
 Note: De Morgan's laws are tested under [OP_BOOLAND](#op-booland--0x9a) and [OP_BOOLOR](#op-boolor--0x9b).
 
 ## OP_0NOTEQUAL (0x92)
 
-- Zero: !(0 == 0) == 1
+- Zero: `!(0 == 0) == 1`
     - Pass: `OP_0 OP_0NOTEQUAL OP_0 OP_NUMEQUAL`
-- Non-zero: !(a == 0) == 1
+- Non-zero: `!(a == 0) == 1`
     - Pass: `{stack: a} OP_0NOTEQUAL OP_1 OP_NUMEQUAL`
-- Double: !(!a) == !(!(a == 0) == 0)
+- Double: `!(!a) == !(!(a == 0) == 0)`
     - Pass: `{stack: a} OP_DUP OP_0NOTEQUAL OP_0NOTEQUAL OP_SWAP OP_NOT OP_NOT OP_NUMEQUAL`
 
 ## OP_ADD (0x93)
 
-- Identity: a + 0 == a && 0 + a == a
+- Identity: `a + 0 == a && 0 + a == a`
     - Pass: `{stack: a} OP_DUP OP_0 OP_ADD OP_OVER OP_NUMEQUAL OP_0 OP_2 OP_PICK OP_ADD OP_ROT OP_NUMEQUAL OP_BOOLAND`
-- Commutativity: a + b == b + a
+- Commutativity: `a + b == b + a`
     - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_ROT OP_ADD OP_NUMEQUAL`
-- Successor: a < a + b
-    - Pass: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where b > 0
-    - Fail: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where b <= 0 (must fail with `ScriptError::EVAL_FALSE` error)
-- Inverse: (a + b) - b == a
+- Successor: `a < a + b`
+    - Pass: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where `b > 0`
+    - Fail: `{stack: a, b} OP_OVER OP_ADD OP_LESSTHAN`, where `b <= 0` (must fail with `ScriptError::EVAL_FALSE` error)
+- Inverse: `(a + b) - b == a`
     - Pass: `{stack: a, b} OP_2DUP OP_ADD OP_SWAP OP_SUB OP_NUMEQUAL`
 - Range:
     - Pass: `{stack: a, b} OP_ADD OP_DROP OP_1`, where `a + b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
     - Fail: `{stack: a, b} OP_ADD OP_DROP OP_1`, where `a + b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
-- Associativity: (a + b) + c == a + (b + c)
+- Associativity: `(a + b) + c == a + (b + c)`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_ADD OP_OVER OP_ADD OP_2SWAP OP_3 OP_ROLL OP_ADD OP_ADD OP_NUMEQUAL`
 
 ## OP_SUB (0x94)
 
-- Identity: a - 0 == a
+- Identity: `a - 0 == a`
     - Pass: `{stack: a} OP_DUP OP_0 OP_SUB OP_NUMEQUAL`
-- Sign: 0 - a == -a
+- Sign: `0 - a == -a`
     - Pass: `{stack: a} OP_0 OP_OVER OP_SUB OP_SWAP OP_NEGATE OP_NUMEQUAL`
-- Anti-commutativity: a - b == -(b - a)
+- Anti-commutativity: `a - b == -(b - a)`
     - Pass: `{stack: a, b} OP_2DUP OP_SUB OP_SWAP OP_ROT OP_SUB OP_NEGATE OP_NUMEQUAL`
-- Predecessor: a > a - b
-    - Pass: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`, where b > 0
-    - Fail: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`, where b <= 0 (must fail with `ScriptError::EVAL_FALSE` error)
-- Inverse: (a - b) + b == a
+- Predecessor: `a > a - b`
+    - Pass: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`, where `b > 0`
+    - Fail: `{stack: a, b} OP_OVER OP_SWAP OP_SUB OP_GREATERTHAN`, where `b <= 0` (must fail with `ScriptError::EVAL_FALSE` error)
+- Inverse: `(a - b) + b == a`
     - Pass: `{stack: a, b} OP_2DUP OP_SUB OP_ADD OP_NUMEQUAL`
 - Range:
     - Pass: `{stack: a, b} OP_SUB OP_DROP OP_1`, where `a - b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
     - Fail: `{stack: a, b} OP_SUB OP_DROP OP_1`, where `a - b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
-- Non-associativity: (a - b) - c == a - (b + c)
+- Non-associativity: `(a - b) - c == a - (b + c)`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_SUB OP_OVER OP_SUB OP_2SWAP OP_3 OP_ROLL OP_ADD OP_SUB OP_NUMEQUAL`
 
 ## OP_MUL (0x95)
 
-- Identity: a * 1 == a && 1 * a == a
+- Identity: `a * 1 == a && 1 * a == a`
     - Pass: `{stack: a} OP_DUP OP_1 OP_MUL OP_OVER OP_NUMEQUAL OP_1 OP_2 OP_PICK OP_MUL OP_ROT OP_NUMEQUAL OP_BOOLAND`
-- Negation: a * (-1) == -a
+- Negation: `a * (-1) == -a`
     - Pass: `{stack: a} OP_DUP OP_1NEGATE OP_MUL OP_SWAP OP_NEGATE OP_NUMEQUAL`
-- Zero: a * 0 == 0 && 0 * a == 0
+- Zero: `a * 0 == 0 && 0 * a == 0`
     - Pass: `{stack: a} OP_DUP OP_0 OP_MUL OP_0 OP_NUMEQUAL OP_0 OP_ROT OP_MUL OP_0 OP_NUMEQUAL OP_BOOLAND`
-- Equivalence with multiple additions: a * 4 == a + a + a + a
+- Equivalence with multiple additions: `a * 4 == a + a + a + a`
     - Pass: `{stack: a} OP_DUP OP_4 OP_MUL OP_OVER OP_2 OP_PICK OP_ADD OP_2 OP_PICK OP_ADD OP_ROT OP_ADD OP_NUMEQUAL`
-- Equivalence with multiple subtractions: a * (-4) == a - a - a - a - a - a
+- Equivalence with multiple subtractions: `a * (-4) == a - a - a - a - a - a`
     - Pass: `{stack: a} OP_DUP OP_4 OP_NEGATE OP_MUL OP_OVER OP_2 OP_PICK OP_SUB OP_2 OP_PICK OP_SUB OP_2 OP_PICK OP_SUB OP_2 OP_PICK OP_SUB OP_ROT OP_SUB OP_NUMEQUAL`
-- Commutativity: a * b == b * a
+- Commutativity: `a * b == b * a`
     - Pass: `{stack: a, b} OP_2DUP OP_MUL OP_SWAP OP_ROT OP_MUL OP_NUMEQUAL`
-- Inverse: (a * b) / b == a, where b != 0
+- Inverse: `(a * b) / b == a, where b != 0`
     - Pass: `{stack: a, b} OP_2DUP OP_MUL OP_SWAP OP_DIV OP_NUMEQUAL`
 - Range:
     - Pass: `{stack: a, b} OP_MUL OP_DROP OP_1`, where `a * b` is within `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range
     - Fail: `{stack: a, b} OP_MUL OP_DROP OP_1`, where `a * b` is out of `[-MAX_SCRIPTNUM, MAX_SCRIPTNUM]` range (must fail with `ScriptError::INVALID_NUMBER_RANGE_BIG_INT` error)
-- Order: a * b < a * c
-    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_ROT OP_MUL OP_ROT OP_ROT OP_MUL OP_LESSTHAN`, where (a > 0 and b < c) or (a < 0 and b > c)
+- Order: `a * b < a * c`
+    - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_ROT OP_MUL OP_ROT OP_ROT OP_MUL OP_LESSTHAN`, where `(a > 0 and b < c) or (a < 0 and b > c)`
     - Fail: `{stack: a, b, c} OP_2 OP_PICK OP_ROT OP_MUL OP_ROT OP_ROT OP_MUL OP_LESSTHAN`, otherwise (must fail with `ScriptError::EVAL_FALSE` error)
-- Associativity: (a * b) * c == a * (b * c)
+- Associativity: `(a * b) * c == a * (b * c)`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_MUL OP_OVER OP_MUL OP_2SWAP OP_3 OP_ROLL OP_MUL OP_MUL OP_NUMEQUAL`
-- Distributivity: a * (b + c) == (a * b) + (a * c)
+- Distributivity: `a * (b + c) == (a * b) + (a * c)`
     - Pass: `{stack: a, b, c} OP_3DUP OP_ADD OP_MUL OP_3 OP_PICK OP_3 OP_ROLL OP_MUL OP_2SWAP OP_MUL OP_ADD OP_NUMEQUAL`
 
 ## OP_DIV (0x96)
 
-- Identity: a / 1 == a
+- Identity: `a / 1 == a`
     - Pass: `{stack: a} OP_DUP OP_1 OP_DIV OP_NUMEQUAL`
-- Negation: a / (-1) == -a
+- Negation: `a / (-1) == -a`
     - Pass: `{stack: a} OP_DUP OP_1NEGATE OP_DIV OP_SWAP OP_NEGATE OP_NUMEQUAL`
-- Division by zero: a / 0 must fail.
+- Division by zero: `a / 0` must fail.
     - Fail: `{stack: a} OP_0 OP_DIV OP_DROP OP_1` (must fail with `ScriptError::DIV_BY_ZERO` error)
-- Self-division: a / a == 1, where a != 0
+- Self-division: `a / a == 1`, where `a != 0`
     - Pass: `{stack: a} OP_DUP OP_DIV OP_1 OP_NUMEQUAL`
-- Dividing a zero: 0 / a == 0, where a != 0
+- Dividing a zero: `0 / a == 0`, where `a != 0`
     - Pass: `{stack: a} OP_0 OP_SWAP OP_DIV OP_0 OP_NUMEQUAL`
-- Inverse: (a / b) * b + (a % b) == a, where b != 0
+- Inverse: `(a / b) * b + (a % b) == a`, where `b != 0`
     - Pass: `{stack: a, b} OP_2DUP OP_DIV OP_OVER OP_MUL OP_2 OP_PICK OP_ROT OP_MOD OP_ADD OP_NUMEQUAL`
-- Distributivity: (a + b) / c == a / c + b / c + (a % c + b % c - (a + b) % c) / c, where c != 0
+- Distributivity: `(a + b) / c == a / c + b / c + (a % c + b % c - (a + b) % c) / c`, where `c != 0`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_ADD OP_OVER OP_DIV OP_3 OP_PICK OP_2 OP_PICK OP_DIV OP_2OVER OP_DIV OP_ADD OP_4 OP_PICK OP_3 OP_PICK OP_MOD OP_4 OP_PICK OP_4 OP_PICK OP_MOD OP_ADD OP_2ROT OP_ADD OP_4 OP_PICK OP_MOD OP_SUB OP_3 OP_ROLL OP_DIV OP_ADD OP_NUMEQUAL`
 
 ## OP_MOD (0x97)
 
-- Power identity: (a * a) % a == 0, where a != 0
+- Power identity: `(a * a) % a == 0`, where `a != 0`
     - Pass: `{stack: a} OP_DUP OP_DUP OP_MUL OP_SWAP OP_MOD OP_0 OP_NUMEQUAL`
-- Modulo by zero: a % 0 must fail.
+- Modulo by zero: `a % 0` must fail.
     - Fail: `{stack: a} OP_0 OP_MOD OP_DROP OP_1` (must fail with `ScriptError::MOD_BY_ZERO` error)
-- Repeat identity: (a % b) % b == a % b, where b != 0
+- Repeat identity: `(a % b) % b == a % b`, where `b != 0`
     - Pass: `{stack: a, b} OP_2DUP OP_MOD OP_OVER OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
-- Sign absorption: a % (-b) == a % b, where b != 0
+- Sign absorption: `a % (-b) == a % b`, where `b != 0`
     - Pass: `{stack: a, b} OP_2DUP OP_NEGATE OP_MOD OP_ROT OP_ROT OP_MOD OP_NUMEQUAL`
-- Sign preservation: (-a) % b == -(a % b), where b != 0
+- Sign preservation: `(-a) % b == -(a % b)`, where `b != 0`
     - Pass: `{stack: a, b} OP_OVER OP_NEGATE OP_OVER OP_MOD OP_ROT OP_ROT OP_MOD OP_NEGATE OP_NUMEQUAL`
-- Consistency with OP_MUL and OP_DIV operations: (a / b) * b + (a % b) == a, where b != 0
+- Consistency with OP_MUL and OP_DIV operations: `(a / b) * b + (a % b) == a`, where `b != 0`
     - Test is part of OP_DIV tests
 
 ## OP_BOOLAND (0x9a)
 
-- Idempotence: (a && a) == (a != false)
+- Idempotence: `(a && a) == (a != false)`
     - Pass: `{stack: a} OP_DUP OP_DUP OP_BOOLAND OP_SWAP OP_0 OP_NUMNOTEQUAL OP_NUMEQUAL`
-- Casting: (a && b) == (a != false && b != false)
+- Casting: `(a && b) == (a != false && b != false)`
     - Pass: `{stack: a, b} OP_2DUP OP_BOOLAND OP_ROT OP_0 OP_NUMNOTEQUAL OP_ROT OP_0 OP_NUMNOTEQUAL OP_BOOLAND OP_NUMEQUAL`
-- Commutativity: (a && b) == (b && a)
+- Commutativity: `(a && b) == (b && a)`
     - Pass: `{stack: a, b} OP_2DUP OP_BOOLAND OP_SWAP OP_ROT OP_BOOLAND OP_NUMEQUAL`
-- De Morgan's law: !(a && b) == (!a || !b)
+- De Morgan's law: `!(a && b) == (!a || !b)`
     - Pass: `{stack: a, b} OP_2DUP OP_BOOLAND OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLOR OP_NUMEQUAL`
-- Absorption: (a || (a && b)) == (a != false)
+- Absorption: `(a || (a && b)) == (a != false)`
     - Pass: `{stack: a, b} OP_OVER OP_2 OP_PICK OP_ROT OP_BOOLAND OP_BOOLOR OP_SWAP OP_0 OP_NUMNOTEQUAL OP_NUMEQUAL`
-- Associativity: ((a && b) && c) == (a && (b && c))
+- Associativity: `((a && b) && c) == (a && (b && c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_BOOLAND OP_OVER OP_BOOLAND OP_2SWAP OP_3 OP_ROLL OP_BOOLAND OP_BOOLAND OP_NUMEQUAL`
-- Distributivity: ((a || b) && c) == ((a && c) || (b && c))
+- Distributivity: `((a || b) && c) == ((a && c) || (b && c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_BOOLOR OP_OVER OP_BOOLAND OP_3 OP_ROLL OP_2 OP_PICK OP_BOOLAND OP_2SWAP OP_BOOLAND OP_BOOLOR OP_NUMEQUAL`
 
 ## OP_BOOLOR (0x9b)
 
-- Idempotence: (a || a) == (a != false)
+- Idempotence: `(a || a) == (a != false)`
     - Pass: `{stack: a} OP_DUP OP_DUP OP_BOOLOR OP_SWAP OP_0 OP_NUMNOTEQUAL OP_NUMEQUAL`
-- Casting: (a || b) == (a != false || b != false)
+- Casting: `(a || b) == (a != false || b != false)`
     - Pass: `{stack: a, b} OP_2DUP OP_BOOLOR OP_ROT OP_0 OP_NUMNOTEQUAL OP_ROT OP_0 OP_NUMNOTEQUAL OP_BOOLOR OP_NUMEQUAL`
-- Commutativity: (a || b) == (b || a)
+- Commutativity: `(a || b) == (b || a)`
     - Pass: `{stack: a, b} OP_2DUP OP_BOOLOR OP_SWAP OP_ROT OP_BOOLOR OP_NUMEQUAL`
-- De Morgan's law: !(a || b) == (!a && !b)
+- De Morgan's law: `!(a || b) == (!a && !b)`
     - Pass: `{stack: a, b} OP_2DUP OP_BOOLOR OP_NOT OP_ROT OP_NOT OP_ROT OP_NOT OP_BOOLAND OP_NUMEQUAL`
-- Absorption: (a && (a || b)) == (a != false)
+- Absorption: `(a && (a || b)) == (a != false)`
     - Pass: `{stack: a, b} OP_OVER OP_2 OP_PICK OP_ROT OP_BOOLOR OP_BOOLAND OP_SWAP OP_0 OP_NUMNOTEQUAL OP_NUMEQUAL`
-- Associativity: ((a || b) || c) == (a || (b || c))
+- Associativity: `((a || b) || c) == (a || (b || c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_BOOLOR OP_OVER OP_BOOLOR OP_2SWAP OP_3 OP_ROLL OP_BOOLOR OP_BOOLOR OP_NUMEQUAL`
-- Distributivity: ((a && b) || c) == ((a || c) && (b || c))
+- Distributivity: `((a && b) || c) == ((a || c) && (b || c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_2 OP_PICK OP_BOOLAND OP_OVER OP_BOOLOR OP_3 OP_ROLL OP_2 OP_PICK OP_BOOLOR OP_2SWAP OP_BOOLOR OP_BOOLAND OP_NUMEQUAL`
 
 ## OP_NUMEQUAL (0x9c)
 
-- Reflexivity: (a == a) == true
+- Reflexivity: `(a == a) == true`
     - Pass: `{stack: a} OP_DUP OP_NUMEQUAL OP_1 OP_NUMEQUAL`
-- Commutativity: (a == b) == (b == a)
+- Commutativity: `(a == b) == (b == a)`
     - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUAL OP_SWAP OP_ROT OP_NUMEQUAL OP_NUMEQUAL`
-- Equivalence: (a == b) == !((a < b) || (a > b))
+- Equivalence: `(a == b) == !((a < b) || (a > b))`
     - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUAL OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`
 
 ## OP_NUMEQUALVERIFY (0x9d)
 
-- Reflexivity: (a == a) == true
+- Reflexivity: `(a == a) == true`
     - Pass: `{stack: a} OP_DUP OP_NUMEQUALVERIFY OP_1 OP_1 OP_NUMEQUAL`
-- Commutativity: (a == b) == (b == a)
-    - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where a == b
-    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where a != b (must fail with `ScriptError::EVAL_FALSE` error)
-- Equivalence: (a == b) == !((a < b) || (a > b))
-    - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where a == b
-    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where a != b (must fail with `ScriptError::EVAL_FALSE` error)
+- Commutativity: `(a == b) == (b == a)`
+    - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where `a == b`
+    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_SWAP OP_ROT OP_NUMEQUALVERIFY OP_1 OP_NUMEQUAL`, where `a != b` (must fail with `ScriptError::EVAL_FALSE` error)
+- Equivalence: `(a == b) == !((a < b) || (a > b))`
+    - Pass: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where `a == b`
+    - Fail: `{stack: a, b} OP_2DUP OP_NUMEQUALVERIFY OP_1 OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NOT OP_NUMEQUAL`, where `a != b` (must fail with `ScriptError::EVAL_FALSE` error)
 
 ## OP_NUMNOTEQUAL (0x9e)
 
-- Reflexivity: (a != a) == false
+- Reflexivity: `(a != a) == false`
     - Pass: `{stack: a} OP_DUP OP_NUMNOTEQUAL OP_0 OP_NUMEQUAL`
-- Commutativity: (a != b) == (b != a)
+- Commutativity: `(a != b) == (b != a)`
     - Pass: `{stack: a, b} OP_2DUP OP_NUMNOTEQUAL OP_SWAP OP_ROT OP_NUMNOTEQUAL OP_NUMEQUAL`
-- Equivalence: (a != b) == ((a < b) || (a > b))
+- Equivalence: `(a != b) == ((a < b) || (a > b))`
     - Pass: `{stack: a, b} OP_2DUP OP_NUMNOTEQUAL OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NUMEQUAL`
 
 ## OP_LESSTHAN (0x9f)
 
-- Reflexivity: (a < a) == false
+- Reflexivity: `(a < a) == false`
     - Pass: `{stack: a} OP_DUP OP_LESSTHAN OP_0 OP_NUMEQUAL`
-- Anti-commutativity: (a < b) == (-b < -a)
+- Anti-commutativity: `(a < b)` == `(-b < -a)`
     - Pass: `{stack: a, b} OP_2DUP OP_LESSTHAN OP_SWAP OP_NEGATE OP_ROT OP_NEGATE OP_LESSTHAN OP_NUMEQUAL`
-- Equivalence: (a < b) == !((a == b) || (a > b))
+- Equivalence: `(a < b) == !((a == b) || (a > b))`
     - Pass: `{stack: a, b} OP_2DUP OP_NUMNOTEQUAL OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLOR OP_NUMEQUAL`
-- Transitivity: ((a < c) && (a < b) && (b < c)) == ((a < b) && (b < c))
+- Transitivity: `((a < c) && (a < b) && (b < c)) == ((a < b) && (b < c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_OVER OP_LESSTHAN OP_2OVER OP_LESSTHAN OP_BOOLAND OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHAN OP_BOOLAND OP_3 OP_ROLL OP_3 OP_PICK OP_LESSTHAN OP_2SWAP OP_LESSTHAN OP_BOOLAND OP_NUMEQUAL`
 
 ## OP_GREATERTHAN (0xa0)
 
-- Reflexivity: (a > a) == false
+- Reflexivity: `(a > a) == false`
     - Pass: `{stack: a} OP_DUP OP_GREATERTHAN OP_0 OP_NUMEQUAL`
-- Anti-commutativity: (a > b) == (-b > -a)
+- Anti-commutativity: `(a > b) == (-b > -a)`
     - Pass: `{stack: a, b} OP_2DUP OP_GREATERTHAN OP_SWAP OP_NEGATE OP_ROT OP_NEGATE OP_GREATERTHAN OP_NUMEQUAL`
-- Equivalence: (a > b) == !((a == b) || (a < b))
+- Equivalence: `(a > b) == !((a == b) || (a < b))`
     - Pass: `{stack: a, b} OP_2DUP OP_NUMNOTEQUAL OP_2 OP_PICK OP_2 OP_PICK OP_GREATERTHAN OP_2SWAP OP_LESSTHAN OP_BOOLOR OP_NUMEQUAL`
-- Transitivity: ((a > c) && (a > b) && (b > c)) == ((a > b) && (b > c))
+- Transitivity: `((a > c) && (a > b) && (b > c)) == ((a > b) && (b > c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_OVER OP_GREATERTHAN OP_2OVER OP_GREATERTHAN OP_BOOLAND OP_2 OP_PICK OP_2 OP_PICK OP_GREATERTHAN OP_BOOLAND OP_3 OP_ROLL OP_3 OP_PICK OP_GREATERTHAN OP_2SWAP OP_GREATERTHAN OP_BOOLAND OP_NUMEQUAL`
 
 ## OP_LESSTHANOREQUAL (0xa1)
 
-- Reflexivity: (a <= a) == true
+- Reflexivity: `(a <= a) == true`
     - Pass: `{stack: a} OP_DUP OP_LESSTHANOREQUAL OP_1 OP_NUMEQUAL`
-- Anti-commutativity: (a <= b) == (-b <= -a)
+- Anti-commutativity: `(a <= b) == (-b <= -a)`
     - Pass: `{stack: a, b} OP_2DUP OP_LESSTHANOREQUAL OP_SWAP OP_NEGATE OP_ROT OP_NEGATE OP_LESSTHANOREQUAL OP_NUMEQUAL`
-- Equivalence: (a <= b) == !(a > b)
+- Equivalence: `(a <= b) == !(a > b)`
     - Pass: `{stack: a, b} OP_2DUP OP_LESSTHANOREQUAL OP_ROT OP_ROT OP_GREATERTHAN OP_NOT OP_NUMEQUAL`
-- Transitivity: ((a <= c) && (a <= b) && (b <= c)) == ((a <= b) && (b <= c))
+- Transitivity: `((a <= c) && (a <= b) && (b <= c)) == ((a <= b) && (b <= c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_OVER OP_LESSTHANOREQUAL OP_2OVER OP_LESSTHANOREQUAL OP_BOOLAND OP_2 OP_PICK OP_2 OP_PICK OP_LESSTHANOREQUAL OP_BOOLAND OP_3 OP_ROLL OP_3 OP_PICK OP_LESSTHANOREQUAL OP_2SWAP OP_LESSTHANOREQUAL OP_BOOLAND OP_NUMEQUAL`
 
 ## OP_GREATERTHANOREQUAL (0xa2)
 
-- Reflexivity: (a >= a) == true
+- Reflexivity: `(a >= a) == true`
     - Pass: `{stack: a} OP_DUP OP_GREATERTHANOREQUAL OP_1 OP_NUMEQUAL`
-- Anti-commutativity: (a >= b) == (-b >= -a)
+- Anti-commutativity: `(a >= b) == (-b >= -a)`
     - Pass: `{stack: a, b} OP_2DUP OP_GREATERTHANOREQUAL OP_SWAP OP_NEGATE OP_ROT OP_NEGATE OP_GREATERTHANOREQUAL OP_NUMEQUAL`
-- Equivalence: (a >= b) == !(a < b)
+- Equivalence: `(a >= b) == !(a < b)`
     - Pass: `{stack: a, b} OP_2DUP OP_GREATERTHANOREQUAL OP_ROT OP_ROT OP_LESSTHAN OP_NOT OP_NUMEQUAL`
-- Transitivity: ((a >= c) && (a >= b) && (b >= c)) == ((a >= b) && (b >= c))
+- Transitivity: `((a >= c) && (a >= b) && (b >= c)) == ((a >= b) && (b >= c))`
     - Pass: `{stack: a, b, c} OP_2 OP_PICK OP_OVER OP_GREATERTHANOREQUAL OP_2OVER OP_GREATERTHANOREQUAL OP_BOOLAND OP_2 OP_PICK OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_BOOLAND OP_3 OP_ROLL OP_3 OP_PICK OP_GREATERTHANOREQUAL OP_2SWAP OP_GREATERTHANOREQUAL OP_BOOLAND OP_NUMEQUAL`
 
 ## OP_MIN (0xa3)
 
-- Identity: min(a, a) == a
+- Identity: `min(a, a) == a`
     - Pass: `{stack: a} OP_DUP OP_DUP OP_MIN OP_NUMEQUAL`
-- Order: (min(a, b) <= a && min(a, b) <= b) == true
+- Order: `(min(a, b) <= a && min(a, b) <= b) == true`
     - Pass: `{stack: a, b} OP_2DUP OP_MIN OP_2 OP_PICK OP_LESSTHANOREQUAL OP_ROT OP_2 OP_PICK OP_MIN OP_ROT OP_LESSTHANOREQUAL OP_BOOLAND OP_1 OP_NUMEQUAL`
 
 ## OP_MAX (0xa4)
 
-- Identity: max(a, a) == a
+- Identity: `max(a, a) == a`
     - Pass: `{stack: a} OP_DUP OP_DUP OP_MAX OP_NUMEQUAL`
-- Order: (max(a, b) >= a && max(a, b) >= b) == true
+- Order: `(max(a, b) >= a && max(a, b) >= b) == true`
     - Pass: `{stack: a, b} OP_2DUP OP_MAX OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_ROT OP_2 OP_PICK OP_MAX OP_ROT OP_GREATERTHANOREQUAL OP_BOOLAND OP_1 OP_NUMEQUAL`
 
 ## OP_WITHIN (0xa5)
 
-- Reflexivity: within(a, a, a) == false
+- Reflexivity: `within(a, a, a) == false`
     - Pass: `{stack: a} OP_DUP OP_DUP OP_WITHIN OP_0 OP_NUMEQUAL`
-- Equivalence: within(a, b, c) == (a >= b && a < c)
+- Equivalence: `within(a, b, c) == (a >= b && a < c)`
     - Pass: `{stack: a, b, c} OP_3DUP OP_WITHIN OP_3 OP_PICK OP_3 OP_ROLL OP_GREATERTHANOREQUAL OP_2SWAP OP_LESSTHAN OP_BOOLAND OP_NUMEQUAL`
