@@ -58,9 +58,7 @@ The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-
 
 Any operation that would result in a stack item bigger than `MAX_SCRIPT_ELEMENT_SIZE` must fail, e.g. `{stack: a} OP_1ADD` must fail for `a = MAX_SCRIPTNUM`.
 
-All implementations must fail such script and should throw an error, but it is their choice whether to throw a generic error for operation exceeding `MAX_SCRIPT_ELEMENT_SIZE` or a specific error like `ScriptError::INVALID_NUMBER_RANGE_BIG_INT`.
-
-By coupling the numerical limit with `MAX_SCRIPT_ELEMENT_SIZE` we can guarantee that **any stack item** can be a valid input to an arithmetic operation, e.g. `{stack: a} OP_BIN2NUM OP_ABS OP_0NOTEQUAL` will pass for any `a` on stack, since it will not be possible to have a stack item that would be interpreted as value outside the `[-2^79999 + 1, 2^79999 - 1]` range.
+By coupling the numerical limit with `MAX_SCRIPT_ELEMENT_SIZE` we can guarantee that **any stack item** can be a valid input to an arithmetic operation, e.g. `{stack: a} OP_BIN2NUM OP_ABS OP_0NOTEQUAL` will pass for any `a` on stack, since it will not be possible to have a stack item that would be interpreted as value outside the `[MIN_SCRIPTNUM, MAX_SCRIPTNUM]` range.
 
 ## Rationale
 
