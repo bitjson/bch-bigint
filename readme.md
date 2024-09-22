@@ -52,6 +52,7 @@ The effective limits will then be a calculated value from `MAX_SCRIPT_ELEMENT_SI
 - `MIN_SCRIPTNUM = -MAX_SCRIPTNUM`,
 
 rather than independently set limits (as they were before this upgrade).
+This is equivalent because script numbers are LE integers with highest bit used as sign bit so a stack item of `MAX_SCRIPT_ELEMENT_SIZE` size and filled with all `0xff` bytes will be equal to `MIN_SCRIPTNUM`, and the same item with highest bit flipped (`0xffff...ff...ff7f`) will be equal to `MAX_SCRIPTNUM`.
 
 The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) will set `MAX_SCRIPT_ELEMENT_SIZE` to 10,000 bytes, therefore valid range for results of arithmetic operations shall be the inclusive range: `[-2^79999 + 1, 2^79999 - 1]`.
 
