@@ -78,7 +78,7 @@ Correctness of arithmetic operation implementation has been additionally verifie
 
 - [Property Test Plan for Big Integer Arithmetic Script Operations](./property-test-plan.md)
 
-These tests have been [implemented in BCHN codebase](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/merge_requests/1876/diffs#diff-content-0c722cbecfc6b862724b12f5336f1de55a07785b), and running the whole test suite will result in total 1,765,429 script evaluations, covering all combinations of random input parameters and their edge values.
+These tests have been [implemented in BCHN codebase](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/blob/eaa582a547db93ed8020428b088835a9d3f52a90/src/test/bigint_script_property_tests.cpp), and running the whole test suite will result in about 1.7 million script evaluations, covering all combinations of random input parameters and their edge values.
 
 ## Implementations
 
