@@ -56,7 +56,7 @@ This is equivalent because script numbers are LE integers with highest bit used 
 
 The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) will set `MAX_SCRIPT_ELEMENT_SIZE` to 10,000 bytes, therefore valid range for results of arithmetic operations shall be the inclusive range: `[-2^79999 + 1, 2^79999 - 1]`.
 
-Any operation that would result in a stack item bigger than `MAX_SCRIPT_ELEMENT_SIZE` must fail, e.g. `{stack: a} OP_1ADD OP_0NOTEQUAL` must fail for `a = MAX_SCRIPTNUM`.
+Any operation that would result in a stack item bigger than `MAX_SCRIPT_ELEMENT_SIZE` must fail, e.g. `{stack: a} OP_1ADD` must fail for `a = MAX_SCRIPTNUM`.
 
 All implementations must fail such script and should throw an error, but it is their choice whether to throw a generic error for operation exceeding `MAX_SCRIPT_ELEMENT_SIZE` or a specific error like `ScriptError::INVALID_NUMBER_RANGE_BIG_INT`.
 
