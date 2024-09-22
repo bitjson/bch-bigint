@@ -83,11 +83,21 @@ This is tested implicitly by other property tests, because the result of tested 
 
 ## Cast Operations
 
-These operations convert a stack item to / from a minimally-encoded script number.
+These operations convert a stack item to / from a script number.
 They also must work the same, for the full range of new limits.
 
 ### OP_NUM2BIN (0x80)
 
+Unlike arithmetic opcodes, the number to be converted needs not be a minimally-encoded script number, so generic minimal-encoding tests do not apply here.
+
+- Minimally-encoded Operand Test (the number to be converted needs NOT be a minimally encoded number):
+    - Pass: `{stack: 0, m, n} OP_ROT OP_ROT OP_NUM2BIN 0x0180 OP_CAT OP_DUP OP_ROT OP_NUM2BIN OP_BIN2NUM OP_SWAP OP_BIN2NUM OP_NUMEQUAL`
+    - Pass: `{stack: a, m, n} OP_ROT OP_ROT OP_NUM2BIN OP_DUP OP_ROT OP_NUM2BIN OP_BIN2NUM OP_SWAP OP_BIN2NUM OP_NUMEQUAL`
+- Minimally-encoded Operand Test (the requested size MUST be a minimally encoded number):
+    - Fail: `{stack: a, 0, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN 0x0180 OP_CAT {opcode} OP_DROP OP_1`
+    - Fail: `{stack: a, b, n} OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN {opcode} OP_DROP OP_1`
+- Requested size must be sufficient to accommodate lossless encoding:
+    - Fail: `{stack: a} OP_SIZE OP_1SUB OP_NUM2BIN OP_DUP OP_EQUAL` (must fail with `ScriptError::IMPOSSIBLE_ENCODING` error)
 - Pad a number with n 0-bytes (while shifting the sign bit where present), then split and verify it matches the source number and requested size:
     - Pass: `{stack: a, n} OP_2DUP OP_SWAP OP_SIZE OP_ROT OP_ADD OP_NUM2BIN OP_ROT OP_SIZE OP_ROT OP_SWAP OP_SPLIT OP_DUP OP_BIN2NUM OP_0 OP_NUMEQUALVERIFY OP_SIZE OP_ROT OP_ROT OP_CAT OP_BIN2NUM OP_ROT OP_NUMEQUALVERIFY OP_NUMEQUAL`
 - Overflow
