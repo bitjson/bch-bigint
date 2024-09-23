@@ -53,14 +53,14 @@ The effective limits will then be a calculated value from `MAX_SCRIPT_ELEMENT_SI
 - `MIN_SCRIPTNUM = -MAX_SCRIPTNUM`,
 
 rather than independently set limits (as they were before this upgrade).
-This is equivalent because script numbers are LE integers with highest bit used as sign bit so a stack item of `MAX_SCRIPT_ELEMENT_SIZE` size and filled with all `0xff` bytes will be equal to `MIN_SCRIPTNUM`, and the same item with highest bit unset (`0xffff...ff...ff7f`) will be equal to `MAX_SCRIPTNUM`.
+This is equivalent because script numbers are LE integers with highest bit used as sign bit so a stack item of `MAX_SCRIPT_ELEMENT_SIZE` size and with all bits set (`0xffff...ff...ffff`) will be equal to `MIN_SCRIPTNUM`, and an item of same maximum size but with all bits except the highest bit set (`0xffff...ff...ff7f`) will be equal to `MAX_SCRIPTNUM`.
 
 Any operation that would result in a stack item bigger than `MAX_SCRIPT_ELEMENT_SIZE` must fail, e.g. `{stack: a} OP_1ADD` must fail for `a = MAX_SCRIPTNUM`.
 
 By coupling the numerical limit with `MAX_SCRIPT_ELEMENT_SIZE` we can guarantee that **any stack item** can be a valid input to an arithmetic operation, e.g. `{stack: a} OP_BIN2NUM` will be a valid operation for any `a`, since it will not be possible to have a stack item that would be interpreted as value outside the `[MIN_SCRIPTNUM, MAX_SCRIPTNUM]` range.
 The resulting value could then safely be used as input to any arithmetic opcode, e.g. `{stack: a} OP_BIN2NUM OP_1 OP_MUL` will be valid operation for any `a`.
 
-The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) will set `MAX_SCRIPT_ELEMENT_SIZE` to 10,000 bytes, therefore valid range for results of arithmetic operations will effectively be the inclusive range: `[-2^79999 + 1, 2^79999 - 1]`.
+The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) will set `MAX_SCRIPT_ELEMENT_SIZE` to 10,000 bytes, therefore valid range for results of arithmetic operations will effectively be the inclusive range: `[-2^(MAX_SCRIPT_ELEMENT_SIZE * 8 - 1) + 1, 2^(MAX_SCRIPT_ELEMENT_SIZE * 8 - 1) - 1]`, which resolves to `[-2^79999 + 1, 2^79999 - 1]`.
 
 Other opcodes consuming a numerical value (such as `OP_PICK`, `OP_CHECKMULTISIG`, `OP_CHECKLOCKTIMEVERIFY`, `OP_UTXOVALUE`, etc.) are not affected and existing limits on their input arguments will not be changed.
 
