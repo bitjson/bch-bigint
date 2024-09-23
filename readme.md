@@ -49,15 +49,16 @@ The limit on the maximum length of Bitcoin Cash VM numbers (A.K.A. `nMaxNumSize`
 The numbers will still be limited, but by the maximum stack item size (A.K.A. `MAX_SCRIPT_ELEMENT_SIZE`).
 The effective limits will then be a calculated value from `MAX_SCRIPT_ELEMENT_SIZE`:
 
-- `MAX_SCRIPTNUM = (MAX_SCRIPT_ELEMENT_SIZE * 8 - 1) - 1`, and
+- `MAX_SCRIPTNUM = 2^(MAX_SCRIPT_ELEMENT_SIZE * 8 - 1) - 1`, and
 - `MIN_SCRIPTNUM = -MAX_SCRIPTNUM`,
 
 rather than independently set limits (as they were before this upgrade).
-This is equivalent because script numbers are LE integers with highest bit used as sign bit so a stack item of `MAX_SCRIPT_ELEMENT_SIZE` size and filled with all `0xff` bytes will be equal to `MIN_SCRIPTNUM`, and the same item with highest bit flipped (`0xffff...ff...ff7f`) will be equal to `MAX_SCRIPTNUM`.
+This is equivalent because script numbers are LE integers with highest bit used as sign bit so a stack item of `MAX_SCRIPT_ELEMENT_SIZE` size and filled with all `0xff` bytes will be equal to `MIN_SCRIPTNUM`, and the same item with highest bit unset (`0xffff...ff...ff7f`) will be equal to `MAX_SCRIPTNUM`.
 
 Any operation that would result in a stack item bigger than `MAX_SCRIPT_ELEMENT_SIZE` must fail, e.g. `{stack: a} OP_1ADD` must fail for `a = MAX_SCRIPTNUM`.
 
-By coupling the numerical limit with `MAX_SCRIPT_ELEMENT_SIZE` we can guarantee that **any stack item** can be a valid input to an arithmetic operation, e.g. `{stack: a} OP_BIN2NUM OP_DUP OP_NUMEQUAL` will pass for any `a` on stack, since it will not be possible to have a stack item that would be interpreted as value outside the `[MIN_SCRIPTNUM, MAX_SCRIPTNUM]` range.
+By coupling the numerical limit with `MAX_SCRIPT_ELEMENT_SIZE` we can guarantee that **any stack item** can be a valid input to an arithmetic operation, e.g. `{stack: a} OP_BIN2NUM` will be a valid operation for any `a`, since it will not be possible to have a stack item that would be interpreted as value outside the `[MIN_SCRIPTNUM, MAX_SCRIPTNUM]` range.
+The resulting value could then safely be used as input to any arithmetic opcode, e.g. `{stack: a} OP_BIN2NUM OP_1 OP_MUL` will be valid operation for any `a`.
 
 The [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) will set `MAX_SCRIPT_ELEMENT_SIZE` to 10,000 bytes, therefore valid range for results of arithmetic operations will effectively be the inclusive range: `[-2^79999 + 1, 2^79999 - 1]`.
 
