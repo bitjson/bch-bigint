@@ -138,7 +138,7 @@ Similarly, there exist big integer libraries for languages in which Bitcoin Cash
 
 All these implementations must produce exact same results for exact same inputs, else node implementations would risk a "hard" network split and smart contract libraries would risk faulty transaction validation breaking user-facing applications.
 
-This risk is mitigated by having a [comprehensive set of test vectors](#test-vectors), which cover all the arithmetic opcodes and around all the edges, and that ensures low implemnatiton risk as any implementation errors would be caught by the test suite, and before deployment.
+This risk is mitigated by having a [comprehensive set of test vectors](#implementations), which cover all the arithmetic opcodes and around all the edges, and that ensures low implementation risk as any implementation errors would be caught by the test suite, and before deployment.
 
 ### Risks to Existing Smart Contracts
 
