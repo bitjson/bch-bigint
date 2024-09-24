@@ -74,11 +74,11 @@ Beyond dropping the unnecessary limit on VM number length, this proposal does no
 
 [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) includes a suite of functional tests and benchmarks to verify the behavior and performance of all operations within virtual machine implementations, including high-precision arithmetic operations. See [CHIP Limits: Tests & Benchmarks](https://github.com/bitjson/bch-vm-limits/blob/master/tests-and-benchmarks.md) for details.
 
-Correctness of arithmetic operation implementation has been additionally verified by running [property tests](https://en.wikipedia.org/wiki/Software_testing#Property_testing) for all combinations of parameters, as per:
+Correctness of big integer arithmetic operations implementation in [Bitcoin Cash Node (BCHN)](https://bitcoincashnode.org/) has been additionally verified by running [property tests](https://en.wikipedia.org/wiki/Software_testing#Property_testing) for all combinations of parameters, as per:
 
-- [Property Test Plan for Big Integer Arithmetic Script Operations](./property-test-plan.md)
+- [Property Tests for Big Integer Arithmetic Script Operations](https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/b7e767a48c5be3265f578013b256cae6bb0b8fd3/doc/bigint-script-property-tests.md)
 
-These tests have been [implemented in BCHN codebase](https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node/-/blob/eaa582a547db93ed8020428b088835a9d3f52a90/src/test/bigint_script_property_tests.cpp), and running the whole test suite will result in about 1.7 million script evaluations, covering all combinations of random input parameters and their edge values.
+Running the whole test suite will result in about 1.7 million script evaluations, covering all combinations of random input parameters and their edge values.
 
 ## Implementations
 
