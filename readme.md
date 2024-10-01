@@ -74,6 +74,12 @@ Beyond dropping the unnecessary limit on VM number length, this proposal does no
 
 [`CHIP: Targeted Virtual Machine Limits`](https://github.com/bitjson/bch-vm-limits) includes a suite of functional tests and benchmarks to verify the behavior and performance of all operations within virtual machine implementations, including high-precision arithmetic operations. See [CHIP Limits: Tests & Benchmarks](https://github.com/bitjson/bch-vm-limits/blob/master/tests-and-benchmarks.md) for details.
 
+Correctness of big integer arithmetic operations implementation in [Bitcoin Cash Node (BCHN)](https://bitcoincashnode.org/) has been additionally verified by running [property tests](https://en.wikipedia.org/wiki/Software_testing#Property_testing) for all combinations of parameters, as per:
+
+- [Property Tests for Big Integer Arithmetic Script Operations](https://gitlab.com/cculianu/bitcoin-cash-node/-/blob/b7e767a48c5be3265f578013b256cae6bb0b8fd3/doc/bigint-script-property-tests.md)
+
+Running the whole test suite will result in about 1.7 million script evaluations, covering all combinations of random input parameters and their edge values.
+
 ## Implementations
 
 Please see the following reference implementations for additional examples and test vectors:
