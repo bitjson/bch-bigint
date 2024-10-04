@@ -6,7 +6,7 @@
         Maintainer: Jason Dreyzehner
         Status: Draft
         Initial Publication Date: 2024-07-24
-        Latest Revision Date: 2024-08-28
+        Latest Revision Date: 2024-10-01
         Version: 1.1.0
 
 ## Summary
@@ -130,11 +130,11 @@ Notable alternatives evaluated in the rationale are summarized here for ease of 
 
 This section summarizes the evolution of this document.
 
-- **v1.1.1 – 2024-10-01**
+- **v1.1.1 – 2024-10-01** ([`d1406b69`](https://github.com/bitjson/bch-bigint/commit/d1406b6984c5528983a029c79111646e95286b8c))
   - Add [Risk Assessment](risk-assessment.md)
   - Expand [Rationale](rationale.md)
   - Add [Evaluation of Alternatives](#evaluation-of-alternatives)
-- **v1.1.0 – 2024-08-28**
+- **v1.1.0 – 2024-08-28** ([`616a7a94`](https://github.com/bitjson/bch-bigint/commit/616a7a948dca97aef1126715aa6fe8b3edbe35f8))
   - Remove the VM number length limit ([#1](https://github.com/bitjson/bch-bigint/issues/1))
 - **v1.0.0 – 2024-07-24** ([`b114c957`](https://github.com/bitjson/bch-bigint/commit/b114c95729e670f4b0780d4fd14590c35d281d77))
   - Initial publication
