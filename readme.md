@@ -1,4 +1,4 @@
-# CHIP-2024-07-BigInt: High-Precision Arithmetic for Bitcoin Cash
+# CHIP-2024-07 BigInt: High-Precision Arithmetic for Bitcoin Cash
 
         Title: High-Precision Arithmetic for Bitcoin Cash
         Type: Standards
