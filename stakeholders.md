@@ -186,7 +186,7 @@ Responses from open source libraries, indexers, educational resources, and commu
 | [CashFusion Red Team](https://fusionstats.redteam.cash/)                  |   `v3.1.1`    |         |            |         |   ⏳    |
 | [CashNodes.io](https://cashnodes.io/)                                     |   `v3.1.1`    |         |            |         |   ⏳    |
 | [cashp](https://github.com/Ekliptor/cashp)                                |   `v3.1.1`    |         |            |         |   ⏳    |
-| [CashScript](https://cashscript.org/)                                     |   `v3.1.1`    |         |            |         |   ⏳    |
+| [CashScript](https://cashscript.org/)                                     |   `v3.1.1`    |   ✅    |            |         |         |
 | [CashTags](https://tags.infra.cash/)                                      |   `v3.1.1`    |   ✅    |            |         |         |
 | [CashTokens.org](https://cashtokens.org/)                                 |   `v3.1.1`    |   ✅    |            |         |         |
 | [CashTokens Airdrop Tool](https://github.com/mr-zwets/airdrop-tool)       |   `v3.1.1`    |   ✅    |            |         |         |
@@ -496,7 +496,6 @@ Responses from exchanges, miners, services, and other businesses.
 | [Purse](https://purse.io/)                                     |   `v3.1.1`    |         |            |         |   ⏳    |
 | [Read.cash](https://read.cash/)                                |   `v3.1.1`    |   ✅    |            |         |         |
 | [Reku](https://reku.id/)                                       |   `v3.1.1`    |         |            |         |   ⏳    |
-| [Revoke.cash](https://revoke.cash/)                            |   `v3.1.1`    |         |            |         |   ⏳    |
 | [Revolut](https://www.revolut.com/)                            |   `v3.1.1`    |         |            |         |   ⏳    |
 | [RamNode](https://ramnode.com/)                                |   `v3.1.1`    |         |            |         |   ⏳    |
 | [Riften Labs](https://www.riftenlabs.com/)                     |   `v3.1.1`    |         |            |         |   ⏳    |
@@ -571,7 +570,7 @@ The following public statements have been submitted in response to this CHIP.
 
 The following articles have been published in support of this CHIP:
 
-- [Bitjson.com](https://bitjson.com/): "[2025 Bitcoin Cash Improvement Proposals](https://blog.bitjson.com/2025-chips/)" (October 1, 2024)
+- [Bitjson.com](https://bitjson.com/): [2025 Bitcoin Cash Improvement Proposals](https://blog.bitjson.com/2025-chips/) (October 1, 2024)
 - [FiendishCrypto](https://x.com/FiendishCrypto): [Statement via x.com](https://x.com/FiendishCrypto/status/1842210048128303221) (October 4, 2024)
 - [Brunopbch](https://x.com/Brunopbch): [Statement via x.com](https://x.com/Brunopbch/status/1842234652930773377) (October 4, 2024)
 - [Nurain](https://x.com/Nurain_Dev): [Statement via x.com](https://x.com/Nurain_Dev/status/1842235814706561421) (October 4, 2024)
@@ -583,7 +582,7 @@ The following articles have been published in support of this CHIP:
 - [Kallisti.cash](https://kallisti.cash/): [Statement via x.com](https://x.com/kzKallisti/status/1842997448522019159) (October 6, 2024)
 - [Forward Financial](https://forwardfi.com/): [Statement via x.com](https://x.com/stevethurmond/status/1843518141651095863) (October 8, 2024)
 - [Bitcoin Verde](https://bitcoinverde.org/): [Statement via x.com](https://x.com/joshmgreen/status/1844052791255499140) (October 9, 2024)
-- [General Protocols](https://generalprotocols.com): "[GP on the VM-Limits and BigInt CHIPs: Statement and Recommendations for the Rest of the Ecosystem](https://read.cash/@GeneralProtocols/gp-on-the-vm-limits-and-bigint-chips-statement-and-recommendations-for-the-rest-of-the-ecosystem-8b14039c)" (October 10, 2024)
+- [General Protocols](https://generalprotocols.com): [GP on the VM-Limits and BigInt CHIPs: Statement and Recommendations for the Rest of the Ecosystem](https://read.cash/@GeneralProtocols/gp-on-the-vm-limits-and-bigint-chips-statement-and-recommendations-for-the-rest-of-the-ecosystem-8b14039c) (October 10, 2024)
 - [BCH Guru](bch.guru): [Statement via x.com](https://x.com/BCH_Guru/status/1844600625956520409) (October 11, 2024)
 - [Imaginary_username](https://x.com/im_uname): [Statement via x.com](https://x.com/im_uname/status/1845740394421837889) (October 14, 2024)
 - [Zapit](https://zapit.io/): [Statement via x.com](https://x.com/zapit_io/status/1846053086084686271) (October 15, 2024)
@@ -596,6 +595,7 @@ The following articles have been published in support of this CHIP:
 - [BitcoinCash Nigeria](https://bch.ng/): [Statement via x.com](https://x.com/bch_nigeria/status/1847081185140228518) (October 17, 2024)
 - [FullStack.Cash](https://fullStack.cash): [Statement via x.com](https://x.com/christroutner/status/1847300696422637889) (October 18, 2024)
 - [Pantera Crypto](https://www.youtube.com/@PanteraCrypto): [BitcoinCash 2025 Developments: VM-Limits and BigInt](https://read.cash/@Pantera/bitcoincash-2025-developments-vm-limits-and-bigint-220b9814) (October 21, 2024)
+- [CashScript](https://cashscript.org/): [Statement via github.com](https://github.com/CashScript/cashscript/issues/219#issuecomment-2428914826) (October 22, 2024)
 
 The following quotes have been submitted in support of this CHIP.
 
@@ -821,6 +821,14 @@ The following quotes have been submitted in support of this CHIP.
 > Visionati approves of both CHIPs. We feel they will be an excellent addition to BCH and allow script writers much needed flexibility to extend BCH functionality.
 >
 > —<cite>[Visionati](https://visionati.com/)</cite>
+
+> Integer overflows have been a significant edge case that BCH smart contract developers must carefully account for in their contract design. While Bitcoin Cash previously increased the integer size to 64-bit to work nicely with native introspection, developers have still run into the 64-bit integer limit, particularly with advanced algorithms such as those used in AMM DEXs. Even on Ethereum, which utilizes 256-bit integers, developers often rely on external libraries to emulate higher-precision math. The proposed BigInts CHIP will address these challenges directly, simplifying contract development by eliminating integer overflow as a critical concern.
+>
+> This enhancement will not only lower the barrier for developers but also enable new possibilities for innovation, such as implementing advanced cryptographic functions within contracts using the existing math primitives. BigInts can be introduced safely due to the comprehensive research and testing of the 'Targeted VM Limits' CHIP, which demonstrated that the current length limit on integers no longer serves a meaningful purpose.
+>
+> By sidestepping the complexities of emulating higher precision math, BigInts offer a robust solution that will significantly benefit a wide range of smart contract applications on Bitcoin Cash.
+>
+> —<cite>[CashScript](https://cashscript.org/) ([Issue #219](https://github.com/CashScript/cashscript/issues/219#issuecomment-2428914826))</cite>
 
 ### Disapprove
 
