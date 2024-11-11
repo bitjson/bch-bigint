@@ -143,7 +143,7 @@ Responses from open source libraries, indexers, educational resources, and commu
 | ------------------------------------------------------------------------- | :-----------: | :-----: | :--------: | :-----: | :-----: |
 | [Accept Bitcoin Cash Initiative](https://acceptbitcoin.cash/)             |   `v3.1.1`    |         |            |         |   ⏳    |
 | [ActorForth](https://github.com/ActorForth/ActorForth)                    |   `v3.1.1`    |         |            |         |   ⏳    |
-| [awesomebitcoin.cash](https://awesomebitcoin.cash/)                       |   `v3.1.1`    |         |            |         |   ⏳    |
+| [awesomebitcoin.cash](https://awesomebitcoin.cash/)                       |   `v3.1.1`    |   ✅    |            |         |        |
 | [bch.info](https://bch.info/)                                             |   `v3.1.1`    |         |            |         |   ⏳    |
 | [`bch-rpc-explorer`](https://github.com/sickpig/bch-rpc-explorer)         |   `v3.1.1`    |         |            |         |   ⏳    |
 | [BCH Bull](https://bchbull.com/)                                          |   `v3.1.1`    |   ✅    |            |         |         |
@@ -202,6 +202,7 @@ Responses from open source libraries, indexers, educational resources, and commu
 | [Flowee Products](https://flowee.org/products/)                           |   `v3.1.1`    |         |            |         |   ⏳    |
 | [Fountainhead Cash](https://fountainhead.cash/)                           |   `v3.1.1`    |         |            |         |   ⏳    |
 | [Fulcrum](https://github.com/cculianu/Fulcrum)                            |   `v3.1.1`    |   ✅    |            |         |         |
+| [Future Bitcoin Cash](https://futurebitcoin.cash)                         |   `v3.1.1`    |   ✅    |            |         |         |
 | [Googol.cash Testnet Faucet](https://tbch4.googol.cash/)                  |   `v3.1.1`    |   ✅    |            |         |         |
 | [Haskoin](https://github.com/haskoin/haskoin-core)                        |   `v3.1.1`    |         |            |         |   ⏳    |
 | [Jedex](https://github.com/bitjson/jedex)                                 |   `v3.1.1`    |   ✅    |            |         |         |
@@ -242,6 +243,8 @@ Responses from open source libraries, indexers, educational resources, and commu
 | [Tipb.ch](https://tipb.ch)                                                |   `v3.1.1`    |   ✅    |            |         |         |
 | [Tokenaut](https://www.tokenaut.cash/)                                    |   `v3.1.1`    |   ✅    |            |         |         |
 | [TokenStork](https://tokenstork.com/)                                     |   `v3.1.1`    |   ✅    |            |         |         |
+| [Unspent.cash](https://unspent.cash/)                                     |   `v3.1.1`    |   ✅    |            |         |         |
+| [Unspent Phi](https://unspent.app/)                                       |   `v3.1.1`    |   ✅    |            |         |         |
 | [Watchtower](https://watchtower.cash/)                                    |   `v3.1.1`    |   ✅    |            |         |         |
 | [Where2.cash](https://www.where2.cash/)                                   |   `v3.1.1`    |         |            |         |   ⏳    |
 
@@ -884,3 +887,6 @@ The following statements have been submitted from individuals and organizations 
 > 
 > —<cite>Melroy van den Berg, [Melroy's BCH Explorer](https://explorer.melroy.org), [Melroy.org](https://melroy.org)</cite>
 
+> Unnecessary limits are bad. All 2qx projects will support the CHIP 2024-07 BigInt: High-Precision Arithmetic for Bitcoin Cash for the May 2025 upgrade.
+> 
+> —<cite>2qx ([memo]([https://memo.cash/a/e4e121bed1](https://memo.cash/a/55952253dd))) Independent Bitcoin Application Developer, [Future Bitcoin Cash](https://futurebitcoin.cash), [Unspent](https://unspent.cash), [Unspent Phi](https://unspent.app), [mainnet-js](https://github.com/mainnet-cash/mainnet-js) contributor,  [awesomebitcoin.cash](https://awesomebitcoin.cash/)</cite>
