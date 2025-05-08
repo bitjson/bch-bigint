@@ -4,10 +4,10 @@
         Type: Standards
         Layer: Consensus
         Maintainer: Jason Dreyzehner
-        Status: Draft
+        Status: Final
         Initial Publication Date: 2024-07-24
         Latest Revision Date: 2024-10-01
-        Version: 1.1.0
+        Version: 1.1.1
 
 ## Summary
 
